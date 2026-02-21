@@ -28,3 +28,50 @@
 
 - [x] Husky をルート devDependencies に追加
 - [x] `.husky/pre-commit` で tasks.md 未更新時にコミットをブロック
+
+## Phase 1 残り + Phase 2 実装
+
+### Step 3: DB 安全起動 + Drizzle Kit 設定
+- [x] `drizzle.config.ts` 作成
+- [x] `db/index.ts` を DB_MODE=mock 対応に更新
+- [x] `db/mock.ts` を作成（インメモリモックデータ）
+
+### Step 4: Spotify OAuth スキャフォルディング
+- [x] `routes/auth.ts` 作成（PKCE フロー + JWT 生成）
+- [x] `middleware/auth.ts` 作成（JWT 検証）
+
+### Step 5: プレイリスト CRUD API
+- [x] `services/playlistService.ts` 作成（ROP スタイル）
+- [x] `routes/playlists.ts` 作成
+- [x] `index.ts` 更新（ルート登録）
+
+### Step 6: ログイン画面 + OAuth コールバック
+- [ ] `(auth)/login/page.tsx` 作成
+- [ ] `(auth)/callback/page.tsx` 作成
+
+### Step 7: ツリーUI（PlaylistTree + PlaylistTreeNode）
+- [ ] `components/tree/PlaylistTreeNode.tsx` 作成
+- [ ] `components/tree/PlaylistTree.tsx` 作成
+- [ ] `playlists/layout.tsx` 更新（サイドバー統合）
+
+### Step 8: TanStack Query + Zustand で API 接続
+- [ ] `lib/api.ts` 作成（Hono RPC クライアント）
+- [ ] `stores/playlistStore.ts` 作成
+- [ ] `hooks/usePlaylistTree.ts` 作成
+- [ ] `app/providers.tsx` 作成
+- [ ] `app/layout.tsx` 更新
+- [ ] `playlists/layout.tsx` 更新（モック → API）
+
+### Step 9: GET /:id/tracks 再帰 CTE
+- [ ] `hooks/usePlaylistTracks.ts` 作成
+
+### Step 10: Spotify Web Playback SDK + playerStore
+- [ ] `lib/spotify.ts` 作成
+- [ ] `stores/playerStore.ts` 作成
+- [ ] `hooks/useSpotifyPlayer.ts` 作成
+- [ ] `components/player/NowPlayingBar.tsx` 作成
+- [ ] `playlists/layout.tsx` 更新（NowPlayingBar 追加）
+
+### Step 11: シャッフル再生・直接のみ再生
+- [ ] `playerStore` に playPlaylist 実装
+- [ ] `playlists/[id]/page.tsx` 更新（再生ボタン追加）

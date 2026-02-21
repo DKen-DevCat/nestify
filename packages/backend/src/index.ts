@@ -1,8 +1,13 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { authRoutes } from "./routes/auth";
+import { playlistRoutes } from "./routes/playlists";
+import { authMiddleware } from "./middleware/auth";
 
-const app = new Hono();
+type Variables = { userId: string };
+
+const app = new Hono<{ Variables: Variables }>();
 
 app.use("*", logger());
 app.use(
@@ -13,8 +18,15 @@ app.use(
 );
 
 app.get("/", (c) => {
-  return c.json({ message: "Nestify API" });
+  return c.json({ message: "Nestify API", version: "0.1.0" });
 });
+
+// 認証不要ルート
+app.route("/auth", authRoutes);
+
+// 認証必須ルート
+app.use("/api/*", authMiddleware);
+app.route("/api/playlists", playlistRoutes);
 
 // Hono RPC のため型を export（フロントエンドが使う）
 export type AppType = typeof app;
