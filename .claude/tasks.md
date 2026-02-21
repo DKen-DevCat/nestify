@@ -79,6 +79,9 @@
 - [x] `routes/spotify.ts` 作成（GET /api/spotify/me/playlists, POST /api/spotify/import, POST /api/spotify/export/:id）
 - [x] `index.ts` に spotifyRoutes を登録
 
+### バグ修正
+- [x] `(auth)` ルートグループの URL パス誤り修正（`/auth/dev-login` → `/dev-login`）
+
 ### 残-C: フロントエンド Spotify インポート/エクスポート UI（完了）
 - [x] `lib/api.ts` に `api.spotify.{myPlaylists, import, export}` を追加
 - [x] `SpotifySimplifiedPlaylist` 型を `api.ts` に追加

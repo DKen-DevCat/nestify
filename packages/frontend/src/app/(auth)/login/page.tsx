@@ -38,7 +38,7 @@ export default function LoginPage() {
           <div className="pt-4 border-t border-white/5">
             <p className="text-foreground/20 text-xs mb-2">開発環境</p>
             <a
-              href="/auth/dev-login"
+              href="/dev-login"
               className="text-accent-green text-xs underline opacity-60 hover:opacity-100 transition-opacity"
             >
               モックデータでログイン（DEV_BYPASS_AUTH）

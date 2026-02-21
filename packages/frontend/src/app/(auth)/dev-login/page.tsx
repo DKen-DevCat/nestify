@@ -10,7 +10,7 @@ import { DevLoginClient } from "./DevLoginClient";
 
 export default function DevLoginPage() {
   if (process.env.NODE_ENV === "production") {
-    redirect("/auth/login");
+    redirect("/login");
   }
 
   return <DevLoginClient />;
