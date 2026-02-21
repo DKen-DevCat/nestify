@@ -78,3 +78,4 @@
 - [x] Fisher-Yates シャッフル実装
 - [x] `playlists/[id]/page.tsx` → `PlaylistDetailView.tsx` に再生ボタン追加
 - [x] 継承バッジ（`継承 · {ソースPL名}`）表示
+
