@@ -7,10 +7,13 @@ set -e
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 PLAN_FILE="$PROJECT_DIR/.claude/plan.md"
 
-# git の変更がない場合はスキップ
-if git -C "$PROJECT_DIR" diff --quiet 2>/dev/null && \
-   git -C "$PROJECT_DIR" diff --cached --quiet 2>/dev/null; then
-  echo "[trigger-codex-review] No git changes; skipping Codex review."
+# 未コミットの変更 OR 最新コミットが存在するか確認
+HAS_UNSTAGED=$(git -C "$PROJECT_DIR" diff --quiet 2>/dev/null; echo $?)
+HAS_STAGED=$(git -C "$PROJECT_DIR" diff --cached --quiet 2>/dev/null; echo $?)
+HAS_COMMITS=$(git -C "$PROJECT_DIR" log --oneline -1 2>/dev/null | wc -l | tr -d ' ')
+
+if [ "$HAS_UNSTAGED" = "0" ] && [ "$HAS_STAGED" = "0" ] && [ "$HAS_COMMITS" = "0" ]; then
+  echo "[trigger-codex-review] No git activity; skipping Codex review."
   exit 0
 fi
 
@@ -22,7 +25,7 @@ REVIEW_OUTPUT=$(copilot --model gpt-5.2-codex \
   --add-dir "$PROJECT_DIR" \
   --allow-all \
   -s \
-  -p "Review the current code changes in this workspace (run 'git diff' and 'git diff --cached' to see them). List issues, suggestions, and positive findings. Be concise and specific.")
+  -p "Review the latest changes in this workspace. First run 'git diff' to check unstaged changes, 'git diff --cached' for staged changes, and 'git show HEAD --stat' with 'git diff HEAD~1 HEAD' for the latest commit. List issues, suggestions, and positive findings. Be concise and specific.")
 
 {
   echo ""
