@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Download } from "lucide-react";
 import { PlaylistTree } from "@/components/tree/PlaylistTree";
@@ -14,6 +14,14 @@ export function PlaylistSidebar() {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+
+  // 未認証の場合はログインページへリダイレクト
+  useEffect(() => {
+    const token = localStorage.getItem("nestify_token");
+    if (!token) {
+      router.replace("/login");
+    }
+  }, [router]);
   const { selectedId, expandedIds, select, toggleExpand } = usePlaylistStore();
   const { data: playlists, isLoading, isError } = usePlaylistTree();
   const { mutate: updatePlaylist } = useUpdatePlaylist();

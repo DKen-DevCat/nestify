@@ -83,6 +83,16 @@
 - [x] `(auth)` ルートグループの URL パス誤り修正（`/auth/dev-login` → `/dev-login`）
 - [x] `/playlists/page.tsx` が存在せず 404 になっていた問題を修正（案内ページを追加）
 - [x] `DevLoginClient` のエラー時リンク修正（`/auth/login` → `/login`）
+- [x] `PlaylistSidebar` に認証ガード追加（未認証時 → `/login` リダイレクト）
+
+## E2E テスト（Playwright）
+
+- [x] `packages/e2e` ワークスペース作成・Playwright インストール（Chromium）
+- [x] `playwright.config.ts`：setup / unauthenticated / authenticated の3プロジェクト構成
+- [x] `tests/smoke.spec.ts`：フロント・バックエンドの起動確認
+- [x] `tests/auth.spec.ts`：未認証リダイレクト・ログインページ・dev-login フロー
+- [x] `tests/playlists.spec.ts`：ツリー表示・選択・作成・展開・詳細ページ・削除ダイアログ
+- [x] 20 テスト全通過（`playwright test`）
 
 ### 残-C: フロントエンド Spotify インポート/エクスポート UI（完了）
 - [x] `lib/api.ts` に `api.spotify.{myPlaylists, import, export}` を追加
