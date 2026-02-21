@@ -7,12 +7,12 @@ set -e
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 PLAN_FILE="$PROJECT_DIR/.claude/plan.md"
 
-# 未コミットの変更 OR 最新コミットが存在するか確認
+# 未コミットの変更 OR リポジトリにコミットが存在するか確認
 HAS_UNSTAGED=$(git -C "$PROJECT_DIR" diff --quiet 2>/dev/null; echo $?)
 HAS_STAGED=$(git -C "$PROJECT_DIR" diff --cached --quiet 2>/dev/null; echo $?)
-HAS_COMMITS=$(git -C "$PROJECT_DIR" log --oneline -1 2>/dev/null | wc -l | tr -d ' ')
+HAS_COMMITS=$(git -C "$PROJECT_DIR" rev-parse --verify HEAD >/dev/null 2>&1; echo $?)
 
-if [ "$HAS_UNSTAGED" = "0" ] && [ "$HAS_STAGED" = "0" ] && [ "$HAS_COMMITS" = "0" ]; then
+if [ "$HAS_UNSTAGED" = "0" ] && [ "$HAS_STAGED" = "0" ] && [ "$HAS_COMMITS" != "0" ]; then
   echo "[trigger-codex-review] No git activity; skipping Codex review."
   exit 0
 fi
