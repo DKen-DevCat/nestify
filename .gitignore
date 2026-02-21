@@ -44,5 +44,5 @@ bun-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# bun
-bun.lock
+# bun error log
+bun-error.log

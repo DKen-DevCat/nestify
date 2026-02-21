@@ -23,3 +23,8 @@
 - [x] `.gitignore` を更新（`.turbo/` を追加）
 - [x] ルートの不要ファイル（`src/`, `tsconfig.json` 等）を削除
 - [x] `trigger-codex-review.sh` をコミット後もレビュー対象にするよう修正
+
+## ワークフロー仕組み化
+
+- [x] Husky をルート devDependencies に追加
+- [x] `.husky/pre-commit` で tasks.md 未更新時にコミットをブロック

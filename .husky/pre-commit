@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# .husky/pre-commit
+# コミット前に .claude/tasks.md が更新されているか確認する
+
+TASKS_FILE=".claude/tasks.md"
+
+# tasks.md 自体がステージングされていれば OK
+if git diff --cached --name-only | grep -q "\.claude/tasks\.md"; then
+  exit 0
+fi
+
+# .claude/ 以外のファイルがステージングされている場合のみチェック
+STAGED_NON_CLAUDE=$(git diff --cached --name-only | grep -v "^\.claude/" | wc -l | tr -d ' ')
+
+if [ "$STAGED_NON_CLAUDE" -gt "0" ]; then
+  echo ""
+  echo "┌─────────────────────────────────────────────────────┐"
+  echo "│  .claude/tasks.md が更新されていません              │"
+  echo "│                                                     │"
+  echo "│  実装・修正を完了した場合は tasks.md を更新して     │"
+  echo "│  コミットに含めてください。                         │"
+  echo "│                                                     │"
+  echo "│  スキップする場合: git commit --no-verify           │"
+  echo "└─────────────────────────────────────────────────────┘"
+  echo ""
+  exit 1
+fi
