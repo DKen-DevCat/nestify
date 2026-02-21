@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { SignJWT } from "jose";
 import { db, isMockMode } from "../db/index";
-import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { users, pkceStates } from "../db/schema";
+import { eq, lt } from "drizzle-orm";
 
 const SPOTIFY_SCOPES = [
   "playlist-read-private",
@@ -19,8 +19,41 @@ const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret-change-in-production";
 const JWT_EXPIRY = "7d";
 
 // PKCE: セッション間で code_verifier を保持するための一時ストア
-// 本番では Redis や DB を使う。ここではインメモリで代替。
+// DBモードでは pkce_states テーブルを使用。モックモードではインメモリで代替。
 const codeVerifierStore = new Map<string, string>();
+
+async function saveState(state: string, codeVerifier: string): Promise<void> {
+  if (!isMockMode && db) {
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await db
+      .insert(pkceStates)
+      .values({ state, codeVerifier, expiresAt })
+      .onConflictDoUpdate({ target: pkceStates.state, set: { codeVerifier, expiresAt } });
+    // 期限切れのエントリを削除（機会があるときにクリーンアップ）
+    await db.delete(pkceStates).where(lt(pkceStates.expiresAt, new Date()));
+  } else {
+    codeVerifierStore.set(state, codeVerifier);
+    setTimeout(() => codeVerifierStore.delete(state), 10 * 60 * 1000);
+  }
+}
+
+async function getAndDeleteState(state: string): Promise<string | null> {
+  if (!isMockMode && db) {
+    const rows = await db
+      .select()
+      .from(pkceStates)
+      .where(eq(pkceStates.state, state));
+    if (rows.length === 0) return null;
+    await db.delete(pkceStates).where(eq(pkceStates.state, state));
+    // 期限切れチェック
+    if (rows[0].expiresAt < new Date()) return null;
+    return rows[0].codeVerifier;
+  } else {
+    const verifier = codeVerifierStore.get(state) ?? null;
+    codeVerifierStore.delete(state);
+    return verifier;
+  }
+}
 
 function base64UrlEncode(buffer: ArrayBuffer): string {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)))
@@ -87,9 +120,7 @@ authRoutes.get("/login", async (c) => {
   const codeChallenge = await generateCodeChallenge(codeVerifier);
 
   // state をキーに code_verifier を一時保存
-  codeVerifierStore.set(state, codeVerifier);
-  // 10 分後に自動削除
-  setTimeout(() => codeVerifierStore.delete(state), 10 * 60 * 1000);
+  await saveState(state, codeVerifier);
 
   const params = new URLSearchParams({
     response_type: "code",
@@ -128,11 +159,10 @@ authRoutes.get("/callback", async (c) => {
     return c.json({ ok: false, error: "Missing code or state" }, 400);
   }
 
-  const codeVerifier = codeVerifierStore.get(state);
+  const codeVerifier = await getAndDeleteState(state);
   if (!codeVerifier) {
     return c.json({ ok: false, error: "Invalid or expired state" }, 400);
   }
-  codeVerifierStore.delete(state);
 
   const redirectUri =
     process.env.SPOTIFY_REDIRECT_URI ?? "http://localhost:3001/auth/callback";

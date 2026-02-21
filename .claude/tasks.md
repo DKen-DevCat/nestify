@@ -113,3 +113,20 @@
 - [x] `components/spotify/ImportPlaylistModal.tsx` 作成（一覧・検索・1クリックインポート）
 - [x] サイドバーにダウンロードアイコンでインポートモーダルを統合
 - [x] 詳細ページに「Spotify へ書き出し」ボタン + 成功時に Spotify リンクを表示
+
+## デプロイ
+
+### バックエンド: Cloudflare Workers（完了）
+- [x] `pkce_states` テーブルを Supabase に追加（CF Workers ステートレス対応）
+- [x] `auth.ts`: PKCE state をインメモリ Map → DB に移行
+- [x] `db/index.ts`: DB 遅延初期化（initDb()）に変更
+- [x] `index.ts`: CF Workers env バインディングを process.env に注入するラッパー追加
+- [x] `wrangler.toml` 作成・シークレット設定・デプロイ完了
+- [x] URL: https://nestify-backend.dken-devdev.workers.dev
+
+### フロントエンド: Vercel（作業中）
+- [ ] GitHub にプッシュ
+- [ ] Vercel にプロジェクトをインポート
+- [ ] 環境変数を設定（NEXT_PUBLIC_API_URL）
+- [ ] デプロイ完了・本番 URL 確定
+- [ ] wrangler.toml の FRONTEND_URL を本番 URL に更新して再デプロイ

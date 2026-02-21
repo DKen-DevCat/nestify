@@ -40,3 +40,11 @@ export const playlistTracks = pgTable("playlist_tracks", {
   order: integer("order").notNull().default(0),
   addedAt: timestamp("added_at").defaultNow(),
 });
+
+// Spotify OAuth PKCE フロー用の一時状態ストア
+// CF Workers はステートレスなため、インメモリ Map の代わりに DB を使用する
+export const pkceStates = pgTable("pkce_states", {
+  state: text("state").primaryKey(),
+  codeVerifier: text("code_verifier").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
