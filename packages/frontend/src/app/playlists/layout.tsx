@@ -1,19 +1,21 @@
+import { NowPlayingBar } from "@/components/player/NowPlayingBar";
+import { PlaylistSidebar } from "./PlaylistSidebar";
+
 export default function PlaylistsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      {/* サイドバー（Phase 2 で実装） */}
-      <aside className="w-64 border-r border-white/10 p-4">
-        <p className="font-[family-name:var(--font-syne)] text-accent-purple font-bold text-lg">
-          Nestify
-        </p>
-      </aside>
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      {/* サイドバー + メイン */}
+      <div className="flex flex-1 overflow-hidden">
+        <PlaylistSidebar />
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      </div>
 
-      {/* メインコンテンツ */}
-      <main className="flex-1 p-6">{children}</main>
+      {/* 再生バー（下部固定） */}
+      <NowPlayingBar />
     </div>
   );
 }

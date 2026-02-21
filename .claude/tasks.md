@@ -41,37 +41,40 @@
 - [x] `middleware/auth.ts` 作成（JWT 検証）
 
 ### Step 5: プレイリスト CRUD API
-- [x] `services/playlistService.ts` 作成（ROP スタイル）
+- [x] `services/playlistService.ts` 作成（ROP スタイル + 再帰 CTE）
 - [x] `routes/playlists.ts` 作成
 - [x] `index.ts` 更新（ルート登録）
 
 ### Step 6: ログイン画面 + OAuth コールバック
-- [ ] `(auth)/login/page.tsx` 作成
-- [ ] `(auth)/callback/page.tsx` 作成
+- [x] `(auth)/login/page.tsx` 作成
+- [x] `(auth)/callback/page.tsx` + `CallbackHandler.tsx` 作成
 
 ### Step 7: ツリーUI（PlaylistTree + PlaylistTreeNode）
-- [ ] `components/tree/PlaylistTreeNode.tsx` 作成
-- [ ] `components/tree/PlaylistTree.tsx` 作成
-- [ ] `playlists/layout.tsx` 更新（サイドバー統合）
+- [x] `components/tree/PlaylistTreeNode.tsx` 作成（再帰ノード）
+- [x] `components/tree/PlaylistTree.tsx` 作成
+- [x] `playlists/layout.tsx` 更新（サイドバー統合）
+- [x] `playlists/PlaylistSidebar.tsx` 作成
 
 ### Step 8: TanStack Query + Zustand で API 接続
-- [ ] `lib/api.ts` 作成（Hono RPC クライアント）
-- [ ] `stores/playlistStore.ts` 作成
-- [ ] `hooks/usePlaylistTree.ts` 作成
-- [ ] `app/providers.tsx` 作成
-- [ ] `app/layout.tsx` 更新
-- [ ] `playlists/layout.tsx` 更新（モック → API）
+- [x] `lib/api.ts` 作成（型付き fetch ラッパー）
+- [x] `stores/playlistStore.ts` 作成（selectedId + expandedIds）
+- [x] `hooks/usePlaylistTree.ts` 作成
+- [x] `hooks/usePlaylistTracks.ts` 作成
+- [x] `app/providers.tsx` 作成（QueryClientProvider）
+- [x] `app/layout.tsx` 更新（Providers 追加）
 
 ### Step 9: GET /:id/tracks 再帰 CTE
-- [ ] `hooks/usePlaylistTracks.ts` 作成
+- [x] `playlistService.ts` に `getTracksRecursive` 実装（モック + 再帰 CTE）
 
 ### Step 10: Spotify Web Playback SDK + playerStore
-- [ ] `lib/spotify.ts` 作成
-- [ ] `stores/playerStore.ts` 作成
-- [ ] `hooks/useSpotifyPlayer.ts` 作成
-- [ ] `components/player/NowPlayingBar.tsx` 作成
-- [ ] `playlists/layout.tsx` 更新（NowPlayingBar 追加）
+- [x] `lib/spotify.ts` 作成（SDK ロード + 再生開始）
+- [x] `stores/playerStore.ts` 作成
+- [x] `hooks/useSpotifyPlayer.ts` 作成
+- [x] `components/player/NowPlayingBar.tsx` 作成
+- [x] `playlists/layout.tsx` 更新（NowPlayingBar 追加）
 
 ### Step 11: シャッフル再生・直接のみ再生
-- [ ] `playerStore` に playPlaylist 実装
-- [ ] `playlists/[id]/page.tsx` 更新（再生ボタン追加）
+- [x] `playerStore` に `playPlaylist(id, tracks, {includeChildren, shuffle})` 実装
+- [x] Fisher-Yates シャッフル実装
+- [x] `playlists/[id]/page.tsx` → `PlaylistDetailView.tsx` に再生ボタン追加
+- [x] 継承バッジ（`継承 · {ソースPL名}`）表示
