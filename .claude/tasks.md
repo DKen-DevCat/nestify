@@ -29,53 +29,38 @@
 - [x] Husky をルート devDependencies に追加
 - [x] `.husky/pre-commit` で tasks.md 未更新時にコミットをブロック
 
-## Phase 1 残り + Phase 2 実装
+## Phase 1 残り + Phase 2 実装（完了）
 
-### Step 3: DB 安全起動 + Drizzle Kit 設定
-- [x] `drizzle.config.ts` 作成
-- [x] `db/index.ts` を DB_MODE=mock 対応に更新
-- [x] `db/mock.ts` を作成（インメモリモックデータ）
+- [x] Step 3: DB_MODE=mock 対応 + drizzle.config.ts
+- [x] Step 4: Spotify OAuth スキャフォルディング
+- [x] Step 5: プレイリスト CRUD API（ROP スタイル + 再帰 CTE）
+- [x] Step 6: ログイン画面 + OAuth コールバック
+- [x] Step 7: ツリーUI（PlaylistTree + PlaylistTreeNode）
+- [x] Step 8: TanStack Query + Zustand で API 接続
+- [x] Step 9: GET /:id/tracks 再帰 CTE
+- [x] Step 10: Spotify Web Playback SDK + playerStore
+- [x] Step 11: シャッフル再生・直接のみ再生
 
-### Step 4: Spotify OAuth スキャフォルディング
-- [x] `routes/auth.ts` 作成（PKCE フロー + JWT 生成）
-- [x] `middleware/auth.ts` 作成（JWT 検証）
+## Phase 3: UX 強化（完了）
 
-### Step 5: プレイリスト CRUD API
-- [x] `services/playlistService.ts` 作成（ROP スタイル + 再帰 CTE）
-- [x] `routes/playlists.ts` 作成
-- [x] `index.ts` 更新（ルート登録）
+### Phase 3-A: DEV_BYPASS_AUTH
+- [x] `routes/auth.ts` に GET /auth/dev-token を追加（DB_MODE=mock + DEV_BYPASS_AUTH=true 限定）
+- [x] `(auth)/dev-login/page.tsx` + `DevLoginClient.tsx` 作成
+- [x] ログイン画面に開発用ショートカットリンクを追加
 
-### Step 6: ログイン画面 + OAuth コールバック
-- [x] `(auth)/login/page.tsx` 作成
-- [x] `(auth)/callback/page.tsx` + `CallbackHandler.tsx` 作成
+### Phase 3-B: プレイリスト作成・削除 UI
+- [x] `hooks/usePlaylistMutations.ts`（create / update / delete）
+- [x] `components/playlist/CreatePlaylistModal.tsx`（アイコン選択 + 名前入力）
+- [x] サイドバーの + ボタンからモーダルを開けるように統合
+- [x] 詳細ページに「サブPL 追加」ボタン + 削除確認ダイアログ
 
-### Step 7: ツリーUI（PlaylistTree + PlaylistTreeNode）
-- [x] `components/tree/PlaylistTreeNode.tsx` 作成（再帰ノード）
-- [x] `components/tree/PlaylistTree.tsx` 作成
-- [x] `playlists/layout.tsx` 更新（サイドバー統合）
-- [x] `playlists/PlaylistSidebar.tsx` 作成
+### Phase 3-C: ドラッグ&ドロップ
+- [x] `@dnd-kit/core` / `sortable` / `utilities` を追加
+- [x] `PlaylistTreeNode` に GripVertical ハンドル + useSortable 追加
+- [x] `PlaylistTree` に DndContext + SortableContext を追加
+- [x] サイドバーに `onReorder` ハンドラ（PATCH /api/playlists/:id）を実装
 
-### Step 8: TanStack Query + Zustand で API 接続
-- [x] `lib/api.ts` 作成（型付き fetch ラッパー）
-- [x] `stores/playlistStore.ts` 作成（selectedId + expandedIds）
-- [x] `hooks/usePlaylistTree.ts` 作成
-- [x] `hooks/usePlaylistTracks.ts` 作成
-- [x] `app/providers.tsx` 作成（QueryClientProvider）
-- [x] `app/layout.tsx` 更新（Providers 追加）
-
-### Step 9: GET /:id/tracks 再帰 CTE
-- [x] `playlistService.ts` に `getTracksRecursive` 実装（モック + 再帰 CTE）
-
-### Step 10: Spotify Web Playback SDK + playerStore
-- [x] `lib/spotify.ts` 作成（SDK ロード + 再生開始）
-- [x] `stores/playerStore.ts` 作成
-- [x] `hooks/useSpotifyPlayer.ts` 作成
-- [x] `components/player/NowPlayingBar.tsx` 作成
-- [x] `playlists/layout.tsx` 更新（NowPlayingBar 追加）
-
-### Step 11: シャッフル再生・直接のみ再生
-- [x] `playerStore` に `playPlaylist(id, tracks, {includeChildren, shuffle})` 実装
-- [x] Fisher-Yates シャッフル実装
-- [x] `playlists/[id]/page.tsx` → `PlaylistDetailView.tsx` に再生ボタン追加
-- [x] 継承バッジ（`継承 · {ソースPL名}`）表示
-
+### Phase 3-D: bun test ユニットテスト
+- [x] `src/__tests__/playlistService.test.ts` 作成
+- [x] getTree / getById / create / update / deletePlaylist / getTracksRecursive テスト
+- [x] 13 テスト全通過（`bun test`）

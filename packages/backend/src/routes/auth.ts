@@ -50,6 +50,22 @@ async function generateJwt(userId: string): Promise<string> {
 
 export const authRoutes = new Hono();
 
+// 開発用トークン発行（DB_MODE=mock かつ DEV_BYPASS_AUTH=true の場合のみ有効）
+authRoutes.get("/dev-token", async (c) => {
+  const isMock = process.env.DB_MODE === "mock";
+  const isBypass = process.env.DEV_BYPASS_AUTH === "true";
+
+  if (!isMock || !isBypass) {
+    return c.json(
+      { ok: false, error: "dev-token is only available in mock+bypass mode" },
+      403,
+    );
+  }
+
+  const token = await generateJwt("mock_user");
+  return c.json({ ok: true, data: { token } });
+});
+
 authRoutes.get("/login", async (c) => {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
   if (!clientId) {
