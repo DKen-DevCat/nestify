@@ -97,6 +97,16 @@
 ### 未コミットファイルの整理
 - [x] 残-A / 残-B のバックエンドファイルがコミット漏れしていたため commit
 
+## 実 DB / Spotify OAuth 接続
+
+- [x] Supabase DB マイグレーション実行（users / playlists / playlist_tracks テーブル作成）
+- [x] `.env` に `SPOTIFY_REDIRECT_URI` 追加・`DB_MODE=db` に切り替え
+- [x] `auth.ts` バグ修正：
+  - `/auth/login` を JSON 返却 → 302 リダイレクトに変更
+  - PKCE パラメータ名 `client_verifier` → `code_verifier` に修正
+  - コールバック後リダイレクト先 `/auth/callback` → `/callback` に修正
+  - DB upsert 実装（users テーブルへの insert/update）
+
 ### 残-C: フロントエンド Spotify インポート/エクスポート UI（完了）
 - [x] `lib/api.ts` に `api.spotify.{myPlaylists, import, export}` を追加
 - [x] `SpotifySimplifiedPlaylist` 型を `api.ts` に追加

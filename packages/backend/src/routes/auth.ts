@@ -1,5 +1,8 @@
 import { Hono } from "hono";
 import { SignJWT } from "jose";
+import { db, isMockMode } from "../db/index";
+import { users } from "../db/schema";
+import { eq } from "drizzle-orm";
 
 const SPOTIFY_SCOPES = [
   "playlist-read-private",
@@ -98,14 +101,8 @@ authRoutes.get("/login", async (c) => {
     code_challenge: codeChallenge,
   });
 
-  // フロントエンドへの認証 URL を返す（リダイレクトはフロント側で行う）
-  return c.json({
-    ok: true,
-    data: {
-      authUrl: `https://accounts.spotify.com/authorize?${params.toString()}`,
-      frontendUrl,
-    },
-  });
+  // Spotify 認証ページへリダイレクト
+  return c.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
 });
 
 authRoutes.get("/callback", async (c) => {
@@ -149,7 +146,7 @@ authRoutes.get("/callback", async (c) => {
       code,
       redirect_uri: redirectUri,
       client_id: clientId,
-      client_verifier: codeVerifier,
+      code_verifier: codeVerifier,
     }),
   });
 
@@ -183,10 +180,48 @@ authRoutes.get("/callback", async (c) => {
     images: { url: string }[];
   };
 
-  // TODO: DB にユーザー情報を upsert（DB 接続後に実装）
-  // 現時点では Spotify ID を JWT の sub として使う
-  const jwt = await generateJwt(profile.id);
+  const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
+  let internalUserId = profile.id; // モックモード時は Spotify ID をそのまま使う
 
+  // DB モード: users テーブルに upsert
+  if (!isMockMode && db) {
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.spotifyId, profile.id));
+
+    if (existing.length > 0) {
+      await db
+        .update(users)
+        .set({
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          tokenExpiresAt: expiresAt,
+          displayName: profile.display_name ?? profile.id,
+          imageUrl: profile.images?.[0]?.url ?? null,
+        })
+        .where(eq(users.spotifyId, profile.id));
+      internalUserId = existing[0].id;
+    } else {
+      const inserted = await db
+        .insert(users)
+        .values({
+          spotifyId: profile.id,
+          displayName: profile.display_name ?? profile.id,
+          email: profile.email ?? null,
+          imageUrl: profile.images?.[0]?.url ?? null,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          tokenExpiresAt: expiresAt,
+        })
+        .returning({ id: users.id });
+      internalUserId = inserted[0].id;
+    }
+  }
+
+  const jwt = await generateJwt(internalUserId);
+
+  // フロントエンドのコールバックページへリダイレクト（(auth) ルートグループのため /callback）
   const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:3000";
-  return c.redirect(`${frontendUrl}/auth/callback?token=${jwt}`);
+  return c.redirect(`${frontendUrl}/callback?token=${jwt}`);
 });
