@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { authRoutes } from "./routes/auth";
 import { playlistRoutes } from "./routes/playlists";
+import { spotifyRoutes } from "./routes/spotify";
 import { authMiddleware } from "./middleware/auth";
 
 type Variables = { userId: string };
@@ -27,6 +28,7 @@ app.route("/auth", authRoutes);
 // 認証必須ルート
 app.use("/api/*", authMiddleware);
 app.route("/api/playlists", playlistRoutes);
+app.route("/api/spotify", spotifyRoutes);
 
 // Hono RPC のため型を export（フロントエンドが使う）
 export type AppType = typeof app;

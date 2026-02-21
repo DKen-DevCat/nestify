@@ -94,6 +94,9 @@
 - [x] `tests/playlists.spec.ts`：ツリー表示・選択・作成・展開・詳細ページ・削除ダイアログ
 - [x] 20 テスト全通過（`playwright test`）
 
+### 未コミットファイルの整理
+- [x] 残-A / 残-B のバックエンドファイルがコミット漏れしていたため commit
+
 ### 残-C: フロントエンド Spotify インポート/エクスポート UI（完了）
 - [x] `lib/api.ts` に `api.spotify.{myPlaylists, import, export}` を追加
 - [x] `SpotifySimplifiedPlaylist` 型を `api.ts` に追加
