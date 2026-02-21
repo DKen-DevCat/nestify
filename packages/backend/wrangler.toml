@@ -1,0 +1,12 @@
+name = "nestify-backend"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 本番の環境変数（シークレットは wrangler secret put で別途設定）
+[vars]
+FRONTEND_URL = "https://nestify.vercel.app"
+PORT = "3001"
+
+# ローカル開発用（wrangler dev で使用）
+# 実際の値は .dev.vars に記載（gitignore 済み）
