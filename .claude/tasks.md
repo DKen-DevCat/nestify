@@ -81,6 +81,8 @@
 
 ### バグ修正
 - [x] `(auth)` ルートグループの URL パス誤り修正（`/auth/dev-login` → `/dev-login`）
+- [x] `/playlists/page.tsx` が存在せず 404 になっていた問題を修正（案内ページを追加）
+- [x] `DevLoginClient` のエラー時リンク修正（`/auth/login` → `/login`）
 
 ### 残-C: フロントエンド Spotify インポート/エクスポート UI（完了）
 - [x] `lib/api.ts` に `api.spotify.{myPlaylists, import, export}` を追加

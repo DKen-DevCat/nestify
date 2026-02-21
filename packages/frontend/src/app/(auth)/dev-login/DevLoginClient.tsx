@@ -41,7 +41,7 @@ export function DevLoginClient() {
             バックエンドを <code className="text-accent-green">DB_MODE=mock DEV_BYPASS_AUTH=true</code> で起動してください
           </p>
           <a
-            href="/auth/login"
+            href="/login"
             className="text-accent-purple text-sm underline"
           >
             通常ログインへ
