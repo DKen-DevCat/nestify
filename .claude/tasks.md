@@ -64,3 +64,24 @@
 - [x] `src/__tests__/playlistService.test.ts` 作成
 - [x] getTree / getById / create / update / deletePlaylist / getTracksRecursive テスト
 - [x] 13 テスト全通過（`bun test`）
+
+## 残実装
+
+### 残-A: Drizzle マイグレーション（完了）
+- [x] `drizzle.config.ts` 作成
+- [x] `src/db/migrations/0000_initial.sql` 作成（users / playlists / playlist_tracks テーブル）
+- [x] `src/db/migrations/meta/_journal.json` 作成
+- [x] `src/db/migrate.ts` 作成（スタンドアロン実行スクリプト）
+- [x] `package.json` の `db:migrate` スクリプトを更新
+
+### 残-B: Spotify サービス + インポート/エクスポート API（完了）
+- [x] `services/spotifyService.ts` 作成（refreshToken / getUserPlaylists / importSpotifyPlaylist / exportToSpotify）
+- [x] `routes/spotify.ts` 作成（GET /api/spotify/me/playlists, POST /api/spotify/import, POST /api/spotify/export/:id）
+- [x] `index.ts` に spotifyRoutes を登録
+
+### 残-C: フロントエンド Spotify インポート/エクスポート UI（完了）
+- [x] `lib/api.ts` に `api.spotify.{myPlaylists, import, export}` を追加
+- [x] `SpotifySimplifiedPlaylist` 型を `api.ts` に追加
+- [x] `components/spotify/ImportPlaylistModal.tsx` 作成（一覧・検索・1クリックインポート）
+- [x] サイドバーにダウンロードアイコンでインポートモーダルを統合
+- [x] 詳細ページに「Spotify へ書き出し」ボタン + 成功時に Spotify リンクを表示

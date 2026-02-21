@@ -1,5 +1,13 @@
 import type { Playlist } from "@nestify/shared";
 
+export interface SpotifySimplifiedPlaylist {
+  id: string;
+  name: string;
+  description: string | null;
+  images: { url: string }[];
+  tracks: { total: number };
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 function getAuthHeaders(): Record<string, string> {
@@ -57,5 +65,19 @@ export const api = {
       apiFetch<{ deleted: boolean }>(`/api/playlists/${id}`, {
         method: "DELETE",
       }),
+  },
+  spotify: {
+    myPlaylists: () =>
+      apiFetch<SpotifySimplifiedPlaylist[]>("/api/spotify/me/playlists"),
+    import: (spotifyPlaylistId: string, parentId?: string | null) =>
+      apiFetch<Playlist>("/api/spotify/import", {
+        method: "POST",
+        body: JSON.stringify({ spotifyPlaylistId, parentId: parentId ?? null }),
+      }),
+    export: (playlistId: string) =>
+      apiFetch<{ spotifyPlaylistId: string; url: string }>(
+        `/api/spotify/export/${playlistId}`,
+        { method: "POST" },
+      ),
   },
 };

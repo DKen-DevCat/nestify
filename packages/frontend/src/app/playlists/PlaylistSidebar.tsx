@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Download } from "lucide-react";
 import { PlaylistTree } from "@/components/tree/PlaylistTree";
 import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
+import { ImportPlaylistModal } from "@/components/spotify/ImportPlaylistModal";
 import { usePlaylistStore } from "@/stores/playlistStore";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { useUpdatePlaylist } from "@/hooks/usePlaylistMutations";
@@ -12,6 +13,7 @@ import { useUpdatePlaylist } from "@/hooks/usePlaylistMutations";
 export function PlaylistSidebar() {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const { selectedId, expandedIds, select, toggleExpand } = usePlaylistStore();
   const { data: playlists, isLoading, isError } = usePlaylistTree();
   const { mutate: updatePlaylist } = useUpdatePlaylist();
@@ -43,14 +45,24 @@ export function PlaylistSidebar() {
         <h1 className="font-[family-name:var(--font-syne)] text-accent-purple font-bold text-lg">
           Nestify
         </h1>
-        <button
-          type="button"
-          title="新しいプレイリストを作成"
-          onClick={() => setIsCreating(true)}
-          className="p-1 rounded hover:bg-white/10 text-foreground/40 hover:text-foreground transition-colors"
-        >
-          <Plus size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            title="Spotify からインポート"
+            onClick={() => setIsImporting(true)}
+            className="p-1 rounded hover:bg-white/10 text-foreground/40 hover:text-foreground transition-colors"
+          >
+            <Download size={16} />
+          </button>
+          <button
+            type="button"
+            title="新しいプレイリストを作成"
+            onClick={() => setIsCreating(true)}
+            className="p-1 rounded hover:bg-white/10 text-foreground/40 hover:text-foreground transition-colors"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
       </div>
 
       {/* ツリー */}
@@ -84,6 +96,14 @@ export function PlaylistSidebar() {
         <CreatePlaylistModal
           parentId={null}
           onClose={() => setIsCreating(false)}
+        />
+      )}
+
+      {/* Spotify インポートモーダル */}
+      {isImporting && (
+        <ImportPlaylistModal
+          parentId={null}
+          onClose={() => setIsImporting(false)}
         />
       )}
     </aside>

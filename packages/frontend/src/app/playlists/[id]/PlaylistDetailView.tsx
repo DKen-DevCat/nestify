@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Shuffle, Music2, Clock, Plus, Trash2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { Play, Shuffle, Music2, Clock, Plus, Trash2, Upload, ExternalLink } from "lucide-react";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useDeletePlaylist } from "@/hooks/usePlaylistMutations";
 import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
+import { api } from "@/lib/api";
 import type { Playlist, SpotifyTrack } from "@nestify/shared";
 
 interface Props {
@@ -39,11 +41,23 @@ export function PlaylistDetailView({ id }: Props) {
   const router = useRouter();
   const [isAddingChild, setIsAddingChild] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [exportedUrl, setExportedUrl] = useState<string | null>(null);
 
   const { data: playlists } = usePlaylistTree();
   const { data: tracks, isLoading, isError } = usePlaylistTracks(id);
   const { playPlaylist, currentTrack, sourcePlaylistId } = usePlayerStore();
   const { mutate: deletePlaylist, isPending: isDeleting } = useDeletePlaylist();
+
+  const { mutate: exportPlaylist, isPending: isExporting } = useMutation({
+    mutationFn: async () => {
+      const res = await api.spotify.export(id);
+      if (!res.ok) throw new Error(res.error);
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setExportedUrl(data.url);
+    },
+  });
 
   const playlist = playlists ? findPlaylistById(playlists, id) : undefined;
 
@@ -125,6 +139,31 @@ export function PlaylistDetailView({ id }: Props) {
               <Plus size={16} />
               サブPL
             </button>
+            {exportedUrl ? (
+              <a
+                href={exportedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-accent-green/30 text-accent-green text-sm hover:bg-accent-green/10 transition-colors"
+              >
+                <ExternalLink size={14} />
+                Spotify で開く
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => exportPlaylist()}
+                disabled={isExporting}
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors disabled:opacity-40"
+              >
+                {isExporting ? (
+                  <div className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Upload size={16} />
+                )}
+                Spotify へ書き出し
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
