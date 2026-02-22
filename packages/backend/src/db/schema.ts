@@ -26,6 +26,8 @@ export const playlists = pgTable("playlists", {
   color: text("color")
     .notNull()
     .default("linear-gradient(135deg,#7c6af7,#f76a8a)"),
+  imageUrl: text("image_url"),
+  spotifyPlaylistId: text("spotify_playlist_id"),
   order: integer("order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

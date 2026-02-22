@@ -93,8 +93,19 @@ export function PlaylistTreeNode({
           )}
         </span>
 
-        {/* アイコン */}
-        <span className="shrink-0 text-base leading-none">{playlist.icon}</span>
+        {/* アイコン: Spotify カバー画像があれば表示、なければ絵文字 */}
+        <span className="shrink-0 w-5 h-5 rounded overflow-hidden flex items-center justify-center text-sm leading-none">
+          {playlist.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={playlist.imageUrl}
+              alt={playlist.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            playlist.icon
+          )}
+        </span>
 
         {/* 名前 */}
         <span

@@ -1,4 +1,4 @@
-import type { Playlist, CreatePlaylistDto, UpdatePlaylistDto } from "@nestify/shared";
+import type { Playlist, SpotifyTrack, CreatePlaylistDto, UpdatePlaylistDto } from "@nestify/shared";
 import { isMockMode, db } from "../db/index";
 import {
   MOCK_PLAYLISTS,
@@ -24,6 +24,7 @@ export interface TrackWithSource {
   order: number;
   addedAt: string;
   sourcePlaylistName: string;
+  track?: SpotifyTrack; // Spotify API から取得したメタデータ（後付け）
 }
 
 // ---------------------------------------------------------------------------
@@ -76,6 +77,8 @@ export async function getTree(
       name: row.name,
       icon: row.icon,
       color: row.color,
+      imageUrl: row.imageUrl ?? null,
+      spotifyPlaylistId: row.spotifyPlaylistId ?? null,
       parentId: row.parentId ?? null,
       order: row.order,
       createdAt: row.createdAt?.toISOString() ?? "",
@@ -138,6 +141,8 @@ export async function getById(
       name: row.name,
       icon: row.icon,
       color: row.color,
+      imageUrl: row.imageUrl ?? null,
+      spotifyPlaylistId: row.spotifyPlaylistId ?? null,
       parentId: row.parentId ?? null,
       order: row.order,
       createdAt: row.createdAt?.toISOString() ?? "",
@@ -196,6 +201,8 @@ export async function create(
       name: dto.name,
       icon: dto.icon ?? "🎵",
       color: dto.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)",
+      imageUrl: dto.imageUrl ?? null,
+      spotifyPlaylistId: dto.spotifyPlaylistId ?? null,
       parentId: dto.parentId ?? null,
       order: maxOrder + 1,
     })
@@ -210,6 +217,8 @@ export async function create(
       name: row.name,
       icon: row.icon,
       color: row.color,
+      imageUrl: row.imageUrl ?? null,
+      spotifyPlaylistId: row.spotifyPlaylistId ?? null,
       parentId: row.parentId ?? null,
       order: row.order,
       createdAt: row.createdAt?.toISOString() ?? "",
@@ -269,6 +278,8 @@ export async function update(
       name: row.name,
       icon: row.icon,
       color: row.color,
+      imageUrl: row.imageUrl ?? null,
+      spotifyPlaylistId: row.spotifyPlaylistId ?? null,
       parentId: row.parentId ?? null,
       order: row.order,
       createdAt: row.createdAt?.toISOString() ?? "",

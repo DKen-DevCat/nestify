@@ -1,9 +1,9 @@
-import type { Playlist, CreatePlaylistDto } from "@nestify/shared";
+import type { Playlist, SpotifyTrack } from "@nestify/shared";
 import { isMockMode, db } from "../db/index";
 import { users, playlists, playlistTracks } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { create, getTracksRecursive } from "./playlistService";
-import type { Result } from "./playlistService";
+import type { Result, TrackWithSource } from "./playlistService";
 
 // ---------------------------------------------------------------------------
 // Spotify API 型定義
@@ -155,6 +155,63 @@ export async function getUserPlaylists(
 }
 
 // ---------------------------------------------------------------------------
+// Spotify トラックメタデータをバッチ取得してトラックに付与（Bug 1 修正）
+// ---------------------------------------------------------------------------
+
+export async function enrichTracksWithSpotifyData(
+  tracks: TrackWithSource[],
+  userId: string,
+): Promise<TrackWithSource[]> {
+  if (tracks.length === 0) return tracks;
+
+  const tokenResult = await getValidAccessToken(userId);
+  if (!tokenResult.ok) return tracks; // トークン取得失敗時はメタデータなしで返す
+
+  const token = tokenResult.data;
+  const ids = [...new Set(tracks.map((t) => t.spotifyTrackId))];
+
+  const metaMap = new Map<string, SpotifyTrack>();
+
+  // Spotify API は 1 回あたり最大 50 件
+  const CHUNK = 50;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const res = await fetch(
+      `https://api.spotify.com/v1/tracks?ids=${chunk.join(",")}&market=JP`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!res.ok) continue;
+
+    const data = (await res.json()) as { tracks: Array<{
+      id: string;
+      name: string;
+      artists: { name: string }[];
+      album: { name: string; images: { url: string }[] };
+      duration_ms: number;
+      preview_url: string | null;
+    } | null> };
+
+    for (const t of data.tracks) {
+      if (!t) continue;
+      metaMap.set(t.id, {
+        id: t.id,
+        name: t.name,
+        artists: t.artists.map((a) => a.name),
+        album: t.album.name,
+        durationMs: t.duration_ms,
+        previewUrl: t.preview_url,
+        imageUrl: t.album.images[0]?.url ?? null,
+      });
+    }
+  }
+
+  return tracks.map((t) => ({
+    ...t,
+    track: metaMap.get(t.spotifyTrackId),
+  }));
+}
+
+// ---------------------------------------------------------------------------
 // Spotify プレイリストをインポート
 // ---------------------------------------------------------------------------
 
@@ -167,6 +224,38 @@ export async function importSpotifyPlaylist(
   if (!tokenResult.ok) return tokenResult;
 
   const token = tokenResult.data;
+
+  // Bug 2: 重複チェック — 同じ Spotify プレイリストをすでにインポート済みか確認
+  if (!isMockMode && db) {
+    const existing = await db
+      .select()
+      .from(playlists)
+      .where(
+        and(
+          eq(playlists.userId, userId),
+          eq(playlists.spotifyPlaylistId, spotifyPlaylistId),
+        ),
+      );
+    if (existing.length > 0) {
+      const row = existing[0];
+      return {
+        ok: true,
+        data: {
+          id: row.id,
+          userId: row.userId,
+          name: row.name,
+          icon: row.icon,
+          color: row.color,
+          imageUrl: row.imageUrl ?? null,
+          spotifyPlaylistId: row.spotifyPlaylistId ?? null,
+          parentId: row.parentId ?? null,
+          order: row.order,
+          createdAt: row.createdAt?.toISOString() ?? "",
+          updatedAt: row.updatedAt?.toISOString() ?? "",
+        },
+      };
+    }
+  }
 
   // プレイリスト情報を取得
   const plRes = await fetch(
@@ -184,14 +273,20 @@ export async function importSpotifyPlaylist(
     images: { url: string }[];
   };
 
-  // Nestify にプレイリストを作成
-  const dto: CreatePlaylistDto = {
-    name: plData.name,
-    icon: "🎵",
-    parentId,
-  };
+  // Bug 3: Spotify カバー画像 URL を保存
+  const imageUrl = plData.images[0]?.url ?? null;
 
-  const createResult = await create(dto, userId);
+  // Nestify にプレイリストを作成
+  const createResult = await create(
+    {
+      name: plData.name,
+      icon: "🎵",
+      imageUrl,
+      spotifyPlaylistId,
+      parentId,
+    },
+    userId,
+  );
   if (!createResult.ok) return createResult;
 
   const newPlaylist = createResult.data;
@@ -199,7 +294,7 @@ export async function importSpotifyPlaylist(
   // トラックを取得して登録
   if (!isMockMode && db) {
     let tracksUrl: string | null =
-      `https://api.spotify.com/v1/playlists/${spotifyPlaylistId}/tracks?limit=50&fields=items(track(id,name)),next`;
+      `https://api.spotify.com/v1/playlists/${spotifyPlaylistId}/tracks?limit=50&fields=items(track(id)),next`;
     let order = 0;
 
     while (tracksUrl) {

@@ -4,6 +4,8 @@ export interface Playlist {
   name: string;
   icon: string; // emoji文字
   color: string; // CSSグラデーション文字列
+  imageUrl?: string | null; // Spotify カバー画像 URL
+  spotifyPlaylistId?: string | null; // インポート元 Spotify プレイリスト ID（重複防止用）
   parentId: string | null; // null = ルートプレイリスト
   order: number; // 兄弟間の並び順
   createdAt: string;
@@ -40,6 +42,8 @@ export interface CreatePlaylistDto {
   icon?: string;
   color?: string;
   parentId?: string | null;
+  imageUrl?: string | null;
+  spotifyPlaylistId?: string | null;
 }
 
 export interface UpdatePlaylistDto {

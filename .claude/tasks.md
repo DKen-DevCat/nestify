@@ -134,3 +134,6 @@
 ### 本番バグ修正（完了）
 - [x] CF Workers I/O エラー修正：リクエストごとに postgres 接続を新規作成・closeDb() を finally で呼ぶ
 - [x] CallbackHandler.tsx: エラー時リダイレクト /auth/login → /login に修正
+- [x] Bug 1: トラック名が ID 表示 → /:id/tracks エンドポイントで Spotify API からバッチ取得してメタデータ付与
+- [x] Bug 2: Spotifyインポート重複 → playlists.spotifyPlaylistId カラム追加、インポート前に重複チェック
+- [x] Bug 3: プレイリストアイコン → playlists.imageUrl カラム追加、インポート時に Spotify カバー画像 URL 保存・フロントで表示

@@ -10,6 +10,7 @@ import {
   deletePlaylist,
   getTracksRecursive,
 } from "../services/playlistService";
+import { enrichTracksWithSpotifyData } from "../services/spotifyService";
 
 const createSchema = z.object({
   name: z.string().min(1).max(100),
@@ -61,7 +62,9 @@ playlistRoutes.get("/:id/tracks", async (c) => {
   if (!result.ok) {
     return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
   }
-  return c.json({ ok: true, data: result.data });
+  // Spotify トラックメタデータ（曲名・アーティスト・再生時間）を付与
+  const enriched = await enrichTracksWithSpotifyData(result.data, userId);
+  return c.json({ ok: true, data: enriched });
 });
 
 playlistRoutes.post("/", zValidator("json", createSchema), async (c) => {

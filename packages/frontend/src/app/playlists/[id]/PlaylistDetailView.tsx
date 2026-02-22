@@ -98,10 +98,21 @@ export function PlaylistDetailView({ id }: Props) {
       {/* ヘッダー */}
       <div className="flex items-start gap-4">
         <div
-          className="w-20 h-20 rounded-xl flex items-center justify-center text-4xl shrink-0"
-          style={{ background: playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)" }}
+          className="w-20 h-20 rounded-xl shrink-0 overflow-hidden"
+          style={{ background: playlist?.imageUrl ? undefined : (playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)") }}
         >
-          {playlist?.icon ?? "🎵"}
+          {playlist?.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={playlist.imageUrl}
+              alt={playlist.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="w-full h-full flex items-center justify-center text-4xl">
+              {playlist?.icon ?? "🎵"}
+            </span>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="font-[family-name:var(--font-syne)] text-2xl font-bold truncate">
