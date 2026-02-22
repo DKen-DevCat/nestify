@@ -125,6 +125,54 @@ async function getValidAccessToken(
 }
 
 // ---------------------------------------------------------------------------
+// Spotify トラック検索
+// ---------------------------------------------------------------------------
+
+export async function searchTracks(
+  query: string,
+  userId: string,
+): Promise<Result<SpotifyTrack[]>> {
+  const tokenResult = await getValidAccessToken(userId);
+  if (!tokenResult.ok) return tokenResult;
+
+  const token = tokenResult.data;
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=20&market=JP`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    return { ok: false, error: "Failed to search Spotify tracks", status: 500 };
+  }
+
+  const data = (await res.json()) as {
+    tracks: {
+      items: Array<{
+        id: string;
+        name: string;
+        artists: { name: string }[];
+        album: { name: string; images: { url: string }[] };
+        duration_ms: number;
+        preview_url: string | null;
+      }>;
+    };
+  };
+
+  const tracks: SpotifyTrack[] = data.tracks.items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    artists: item.artists.map((a) => a.name),
+    album: item.album.name,
+    durationMs: item.duration_ms,
+    previewUrl: item.preview_url,
+    imageUrl: item.album.images[0]?.url ?? null,
+  }));
+
+  return { ok: true, data: tracks };
+}
+
+// ---------------------------------------------------------------------------
 // ユーザーの Spotify プレイリスト一覧を取得
 // ---------------------------------------------------------------------------
 

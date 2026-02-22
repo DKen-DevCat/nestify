@@ -28,12 +28,14 @@ import {
   Upload,
   ExternalLink,
   GripVertical,
+  ListPlus,
 } from "lucide-react";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useDeletePlaylist, useReorderTracks } from "@/hooks/usePlaylistMutations";
 import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
+import { AddTrackModal } from "@/components/spotify/AddTrackModal";
 import { api } from "@/lib/api";
 import type { Playlist, SpotifyTrack } from "@nestify/shared";
 import type { TrackWithSource } from "@/lib/api";
@@ -167,6 +169,7 @@ function SortableTrackItem({
 export function PlaylistDetailView({ id }: Props) {
   const router = useRouter();
   const [isAddingChild, setIsAddingChild] = useState(false);
+  const [isAddingTrack, setIsAddingTrack] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
   // DnD 用のローカル順序（楽観的更新）
@@ -316,6 +319,14 @@ export function PlaylistDetailView({ id }: Props) {
               <Plus size={16} />
               サブPL
             </button>
+            <button
+              type="button"
+              onClick={() => setIsAddingTrack(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
+            >
+              <ListPlus size={16} />
+              曲を追加
+            </button>
             {exportedUrl ? (
               <a
                 href={exportedUrl}
@@ -402,6 +413,14 @@ export function PlaylistDetailView({ id }: Props) {
         <CreatePlaylistModal
           parentId={id}
           onClose={() => setIsAddingChild(false)}
+        />
+      )}
+
+      {/* 曲を追加モーダル */}
+      {isAddingTrack && (
+        <AddTrackModal
+          playlistId={id}
+          onClose={() => setIsAddingTrack(false)}
         />
       )}
 

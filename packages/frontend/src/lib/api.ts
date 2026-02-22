@@ -80,6 +80,11 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify({ orderedIds }),
       }),
+    addTrack: (id: string, spotifyTrackId: string) =>
+      apiFetch<TrackWithSource>(`/api/playlists/${id}/tracks`, {
+        method: "POST",
+        body: JSON.stringify({ spotifyTrackId }),
+      }),
   },
   spotify: {
     myPlaylists: () =>
@@ -93,6 +98,10 @@ export const api = {
       apiFetch<{ spotifyPlaylistId: string; url: string }>(
         `/api/spotify/export/${playlistId}`,
         { method: "POST" },
+      ),
+    search: (q: string) =>
+      apiFetch<import("@nestify/shared").SpotifyTrack[]>(
+        `/api/spotify/search?q=${encodeURIComponent(q)}`,
       ),
   },
 };

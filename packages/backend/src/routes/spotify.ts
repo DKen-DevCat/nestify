@@ -6,6 +6,7 @@ import {
   getUserPlaylists,
   importSpotifyPlaylist,
   exportToSpotify,
+  searchTracks,
 } from "../services/spotifyService";
 
 type Variables = { userId: string };
@@ -15,6 +16,20 @@ function toHttpStatus(status?: number): ContentfulStatusCode {
 }
 
 export const spotifyRoutes = new Hono<{ Variables: Variables }>();
+
+/** Spotify トラック検索 */
+spotifyRoutes.get("/search", async (c) => {
+  const userId = c.get("userId");
+  const q = c.req.query("q");
+  if (!q || q.trim().length === 0) {
+    return c.json({ ok: false, error: "Query parameter 'q' is required" }, 400);
+  }
+  const result = await searchTracks(q.trim(), userId);
+  if (!result.ok) {
+    return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
+  }
+  return c.json({ ok: true, data: result.data });
+});
 
 /** ユーザーの Spotify プレイリスト一覧 */
 spotifyRoutes.get("/me/playlists", async (c) => {

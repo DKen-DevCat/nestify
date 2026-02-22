@@ -359,6 +359,74 @@ export async function reorderTracks(
   return { ok: true, data: { reordered: true } };
 }
 
+/** トラックをプレイリストに追加 */
+export async function addTrack(
+  playlistId: string,
+  spotifyTrackId: string,
+  userId: string,
+): Promise<Result<TrackWithSource>> {
+  if (isMockMode) {
+    const playlist = findFlatById(playlistId);
+    if (!playlist) {
+      return { ok: false, error: "Playlist not found", status: 404 };
+    }
+    const maxOrder = MOCK_TRACKS.filter((t) => t.playlistId === playlistId).length;
+    const newTrack: TrackWithSource = {
+      id: randomUUID(),
+      playlistId,
+      spotifyTrackId,
+      order: maxOrder,
+      addedAt: new Date().toISOString(),
+      sourcePlaylistName: playlist.name,
+    };
+    MOCK_TRACKS.push(newTrack as unknown as typeof MOCK_TRACKS[number]);
+    return { ok: true, data: newTrack };
+  }
+
+  if (!db) return { ok: false, error: "DB not initialized", status: 500 };
+
+  // 所有権チェック
+  const ownerCheck = await db
+    .select({ id: playlists.id, name: playlists.name })
+    .from(playlists)
+    .where(and(eq(playlists.id, playlistId), eq(playlists.userId, userId)));
+
+  if (ownerCheck.length === 0) {
+    return { ok: false, error: "Playlist not found", status: 404 };
+  }
+
+  // 現在の最大 order を取得
+  const maxOrderResult = await db.execute(sql`
+    SELECT COALESCE(MAX("order"), -1) AS max_order
+    FROM playlist_tracks
+    WHERE playlist_id = ${playlistId}
+  `) as unknown as Array<{ max_order: number }>;
+
+  const nextOrder = (maxOrderResult[0]?.max_order ?? -1) + 1;
+
+  const inserted = await db
+    .insert(playlistTracks)
+    .values({
+      playlistId,
+      spotifyTrackId,
+      order: nextOrder,
+    })
+    .returning();
+
+  const row = inserted[0];
+  return {
+    ok: true,
+    data: {
+      id: row.id,
+      playlistId: row.playlistId,
+      spotifyTrackId: row.spotifyTrackId,
+      order: row.order,
+      addedAt: row.addedAt?.toISOString() ?? new Date().toISOString(),
+      sourcePlaylistName: ownerCheck[0].name,
+    },
+  };
+}
+
 /** 子孫を含む全トラック取得（再帰 CTE） */
 export async function getTracksRecursive(
   id: string,

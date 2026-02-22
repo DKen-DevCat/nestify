@@ -138,6 +138,17 @@
 - [x] Bug 2: Spotifyインポート重複 → playlists.spotifyPlaylistId カラム追加、インポート前に重複チェック
 - [x] Bug 3: プレイリストアイコン → playlists.imageUrl カラム追加、インポート時に Spotify カバー画像 URL 保存・フロントで表示
 
+## Spotify 曲検索 & プレイリスト追加
+
+- [x] BE: `searchTracks(query, userId)` を `spotifyService.ts` に追加
+- [x] BE: `GET /api/spotify/search` ルートを追加
+- [x] BE: `addTrack(playlistId, spotifyTrackId, userId)` を `playlistService.ts` に追加
+- [x] BE: `POST /api/playlists/:id/tracks` ルートを追加
+- [x] FE: `api.spotify.search` + `api.playlists.addTrack` を `api.ts` に追加
+- [x] FE: `useAddTrack` hook を `usePlaylistMutations.ts` に追加
+- [x] FE: `AddTrackModal.tsx` を新規作成
+- [x] FE: `PlaylistDetailView.tsx` に「曲を追加」ボタン統合
+
 ### DnD トラック並べ替え + Auth UX 最適化（完了）
 - [x] PATCH /api/playlists/:id/tracks/reorder エンドポイント追加
 - [x] PlaylistDetailView: 直接追加曲のみドラッグ可、楽観的更新でエラー時リセット

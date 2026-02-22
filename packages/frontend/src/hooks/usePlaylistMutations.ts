@@ -50,3 +50,17 @@ export function useReorderTracks(playlistId: string) {
     },
   });
 }
+
+export function useAddTrack(playlistId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (spotifyTrackId: string) =>
+      api.playlists.addTrack(playlistId, spotifyTrackId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["playlist-tracks", playlistId],
+      });
+    },
+  });
+}
