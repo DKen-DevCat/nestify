@@ -124,9 +124,13 @@
 - [x] `wrangler.toml` 作成・シークレット設定・デプロイ完了
 - [x] URL: https://nestify-backend.dken-devdev.workers.dev
 
-### フロントエンド: Vercel（作業中）
-- [ ] GitHub にプッシュ
-- [ ] Vercel にプロジェクトをインポート
-- [ ] 環境変数を設定（NEXT_PUBLIC_API_URL）
-- [ ] デプロイ完了・本番 URL 確定
-- [ ] wrangler.toml の FRONTEND_URL を本番 URL に更新して再デプロイ
+### フロントエンド: Vercel（完了）
+- [x] GitHub にプッシュ
+- [x] Vercel にプロジェクトをインポート
+- [x] 環境変数を設定（NEXT_PUBLIC_API_URL）
+- [x] デプロイ完了・本番 URL 確定（https://nestify-frontend-57y3.vercel.app）
+- [x] wrangler.toml の FRONTEND_URL を本番 URL に更新して再デプロイ
+
+### 本番バグ修正（完了）
+- [x] CF Workers I/O エラー修正：リクエストごとに postgres 接続を新規作成・closeDb() を finally で呼ぶ
+- [x] CallbackHandler.tsx: エラー時リダイレクト /auth/login → /login に修正

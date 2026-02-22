@@ -2,22 +2,19 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
 
-// CF Workers ではモジュール初期化時に process.env が利用不可なため、
-// DB 接続はリクエスト処理開始時（initDb()呼び出し後）に行う
+// CF Workers では I/O オブジェクト（TCP接続）をリクエストをまたいで共有できない。
+// そのため、リクエストごとに新しい接続を作り、レスポンス後に破棄する。
 
 export let db: ReturnType<typeof drizzle> | null = null;
-export let isMockMode = true; // initDb() が呼ばれるまでのデフォルト値
+export let isMockMode = true;
 
-let initialized = false;
+let _client: ReturnType<typeof postgres> | null = null;
 
 /**
- * DB 接続を初期化する。
- * Hono ミドルウェアから最初のリクエスト時に1度だけ呼ばれる。
+ * リクエスト開始時に呼び出す。
+ * CF Workers 対応のためリクエストごとに新しい DB 接続を生成する。
  */
 export function initDb(): void {
-  if (initialized) return;
-  initialized = true;
-
   isMockMode = process.env.DB_MODE === "mock";
 
   if (!isMockMode) {
@@ -27,7 +24,25 @@ export function initDb(): void {
         "DATABASE_URL environment variable is required (set DB_MODE=mock to use in-memory mock)",
       );
     }
-    const client = postgres(connectionString, { max: 5 });
-    db = drizzle(client, { schema });
+    // 前の接続を非同期でクローズ（エラーは無視）
+    if (_client) {
+      _client.end().catch(() => {});
+    }
+    // リクエストごとに新しい接続を作成
+    _client = postgres(connectionString, { max: 1 });
+    db = drizzle(_client, { schema });
+  } else {
+    db = null;
+  }
+}
+
+/**
+ * リクエスト終了後に呼び出す（CF Workers では finally で呼ぶ）。
+ */
+export async function closeDb(): Promise<void> {
+  if (_client) {
+    await _client.end().catch(() => {});
+    _client = null;
+    db = null;
   }
 }

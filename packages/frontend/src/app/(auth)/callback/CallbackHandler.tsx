@@ -13,7 +13,7 @@ export function CallbackHandler() {
 
     if (error) {
       console.error("OAuth error:", error);
-      router.replace("/auth/login");
+      router.replace("/login");
       return;
     }
 
@@ -21,7 +21,7 @@ export function CallbackHandler() {
       localStorage.setItem("nestify_token", token);
       router.replace("/playlists");
     } else {
-      router.replace("/auth/login");
+      router.replace("/login");
     }
   }, [router, searchParams]);
 

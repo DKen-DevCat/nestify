@@ -5,7 +5,7 @@ import { authRoutes } from "./routes/auth";
 import { playlistRoutes } from "./routes/playlists";
 import { spotifyRoutes } from "./routes/spotify";
 import { authMiddleware } from "./middleware/auth";
-import { initDb } from "./db/index";
+import { initDb, closeDb } from "./db/index";
 
 type Variables = { userId: string };
 
@@ -67,10 +67,13 @@ async function fetchHandler(
   if (env.FRONTEND_URL) process.env.FRONTEND_URL = env.FRONTEND_URL;
   if (env.DB_MODE) process.env.DB_MODE = env.DB_MODE;
 
-  // DB を遅延初期化（初回リクエスト時のみ実行）
+  // リクエストごとに新しい DB 接続を初期化し、終了後に破棄する
   initDb();
-
-  return app.fetch(request);
+  try {
+    return await app.fetch(request);
+  } finally {
+    await closeDb();
+  }
 }
 
 export default {
