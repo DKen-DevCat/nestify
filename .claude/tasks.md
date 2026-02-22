@@ -138,6 +138,12 @@
 - [x] Bug 2: Spotifyインポート重複 → playlists.spotifyPlaylistId カラム追加、インポート前に重複チェック
 - [x] Bug 3: プレイリストアイコン → playlists.imageUrl カラム追加、インポート時に Spotify カバー画像 URL 保存・フロントで表示
 
+### トラック詳細情報の表示（完了）
+- [x] アルバムアートのサムネイル表示
+- [x] アルバム名カラム追加
+- [x] 追加日カラム追加（ja-JP ロケール）
+- [x] グリッドを `[16px_auto_1fr_1fr_auto_auto]` に拡張
+
 ### バグ修正: 曲検索失敗 + 部分一致対応
 - [x] `apiFetch` で非 JSON レスポンスの例外をハンドリング
 - [x] `AddTrackModal` の `queryFn` で `{ ok: false }` を throw に変換

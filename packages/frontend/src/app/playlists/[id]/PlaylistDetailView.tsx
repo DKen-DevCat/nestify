@@ -65,6 +65,16 @@ function formatDuration(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function formatDate(isoString: string): string {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "--";
+  return date.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
+}
+
 // ---------------------------------------------------------------------------
 // ソータブルなトラック行
 // ---------------------------------------------------------------------------
@@ -108,7 +118,7 @@ function SortableTrackItem({
       ref={setNodeRef}
       style={style}
       className={[
-        "group grid grid-cols-[16px_auto_1fr_auto] gap-3 px-3 py-2 rounded-md items-center",
+        "group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-md items-center",
         "hover:bg-white/5 transition-colors cursor-pointer",
         isCurrentTrack ? "text-accent-purple" : "",
       ].join(" ")}
@@ -137,22 +147,46 @@ function SortableTrackItem({
         )}
       </span>
 
-      {/* タイトル + アーティスト */}
-      <div className="min-w-0">
-        <p className="text-sm font-medium truncate">
-          {track.track?.name ?? track.spotifyTrackId}
-        </p>
-        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-          <p className="text-xs text-foreground/50 truncate">
-            {track.track?.artists.join(", ")}
-          </p>
-          {isInherited && (
-            <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-accent-purple/10 text-accent-purple/70">
-              継承 · {track.sourcePlaylistName}
-            </span>
+      {/* アルバムアート + タイトル + アーティスト */}
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-9 h-9 rounded shrink-0 overflow-hidden bg-white/5">
+          {track.track?.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={track.track.imageUrl}
+              alt={track.track.album}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Music2 size={12} className="w-full h-full p-2 text-foreground/20" />
           )}
         </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium truncate">
+            {track.track?.name ?? track.spotifyTrackId}
+          </p>
+          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+            <p className="text-xs text-foreground/50 truncate">
+              {track.track?.artists.join(", ")}
+            </p>
+            {isInherited && (
+              <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-accent-purple/10 text-accent-purple/70">
+                継承 · {track.sourcePlaylistName}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* アルバム名 */}
+      <span className="text-foreground/40 text-xs truncate">
+        {track.track?.album ?? "--"}
+      </span>
+
+      {/* 追加日 */}
+      <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+        {formatDate(track.addedAt)}
+      </span>
 
       {/* 再生時間 */}
       <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
@@ -366,11 +400,13 @@ export function PlaylistDetailView({ id }: Props) {
       {/* トラックリスト */}
       {displayTracks.length > 0 ? (
         <div>
-          <div className="grid grid-cols-[16px_auto_1fr_auto] gap-3 px-3 py-2 text-foreground/30 text-xs border-b border-white/5">
+          <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 text-foreground/30 text-xs border-b border-white/5">
             <span />
             <span className="w-6 text-center">#</span>
             <span>タイトル</span>
-            <span className="flex items-center">
+            <span>アルバム</span>
+            <span>追加日</span>
+            <span className="flex items-center justify-end">
               <Clock size={12} />
             </span>
           </div>
