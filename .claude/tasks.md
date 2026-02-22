@@ -137,3 +137,10 @@
 - [x] Bug 1: トラック名が ID 表示 → /:id/tracks エンドポイントで Spotify API からバッチ取得してメタデータ付与
 - [x] Bug 2: Spotifyインポート重複 → playlists.spotifyPlaylistId カラム追加、インポート前に重複チェック
 - [x] Bug 3: プレイリストアイコン → playlists.imageUrl カラム追加、インポート時に Spotify カバー画像 URL 保存・フロントで表示
+
+### DnD トラック並べ替え + Auth UX 最適化（完了）
+- [x] PATCH /api/playlists/:id/tracks/reorder エンドポイント追加
+- [x] PlaylistDetailView: 直接追加曲のみドラッグ可、楽観的更新でエラー時リセット
+- [x] middleware.ts: Cookie ベース認証ルーティング（/playlists→/login、/login→/playlists、/→分岐）
+- [x] CallbackHandler: JWT をクッキー（SameSite=Lax, 30日）にも保存
+- [x] api.ts: 401 時にクッキー + localStorage をクリアして /login へ

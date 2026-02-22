@@ -36,3 +36,17 @@ export function useDeletePlaylist() {
     },
   });
 }
+
+export function useReorderTracks(playlistId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (orderedIds: string[]) =>
+      api.playlists.reorderTracks(playlistId, orderedIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["playlist-tracks", playlistId],
+      });
+    },
+  });
+}

@@ -15,10 +15,11 @@ export function PlaylistSidebar() {
   const [isCreating, setIsCreating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
-  // 未認証の場合はログインページへリダイレクト
+  // 未認証の場合はログインページへリダイレクト（クッキーもクリア）
   useEffect(() => {
     const token = localStorage.getItem("nestify_token");
     if (!token) {
+      document.cookie = "nestify_token=; path=/; max-age=0";
       router.replace("/login");
     }
   }, [router]);

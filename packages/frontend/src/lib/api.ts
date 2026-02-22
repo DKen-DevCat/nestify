@@ -29,6 +29,16 @@ async function apiFetch<T>(
     },
   });
 
+  // 401: トークン期限切れ → クリアしてログインへ
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("nestify_token");
+      document.cookie = "nestify_token=; path=/; max-age=0";
+      window.location.replace("/login");
+    }
+    return { ok: false, error: "Unauthorized" };
+  }
+
   const json = (await res.json()) as
     | { ok: true; data: T }
     | { ok: false; error: string };
@@ -64,6 +74,11 @@ export const api = {
     delete: (id: string) =>
       apiFetch<{ deleted: boolean }>(`/api/playlists/${id}`, {
         method: "DELETE",
+      }),
+    reorderTracks: (id: string, orderedIds: string[]) =>
+      apiFetch<{ reordered: boolean }>(`/api/playlists/${id}/tracks/reorder`, {
+        method: "PATCH",
+        body: JSON.stringify({ orderedIds }),
       }),
   },
   spotify: {

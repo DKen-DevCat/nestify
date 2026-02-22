@@ -1,16 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { Play, Shuffle, Music2, Clock, Plus, Trash2, Upload, ExternalLink } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  Play,
+  Shuffle,
+  Music2,
+  Clock,
+  Plus,
+  Trash2,
+  Upload,
+  ExternalLink,
+  GripVertical,
+} from "lucide-react";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { usePlayerStore } from "@/stores/playerStore";
-import { useDeletePlaylist } from "@/hooks/usePlaylistMutations";
+import { useDeletePlaylist, useReorderTracks } from "@/hooks/usePlaylistMutations";
 import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
 import { api } from "@/lib/api";
 import type { Playlist, SpotifyTrack } from "@nestify/shared";
+import type { TrackWithSource } from "@/lib/api";
 
 interface Props {
   id: string;
@@ -37,16 +63,127 @@ function formatDuration(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+// ---------------------------------------------------------------------------
+// ソータブルなトラック行
+// ---------------------------------------------------------------------------
+
+interface TrackItemProps {
+  track: TrackWithSource;
+  index: number;
+  isOwn: boolean;
+  currentTrackId: string | undefined;
+  playlistName: string | undefined;
+}
+
+function SortableTrackItem({
+  track,
+  index,
+  isOwn,
+  currentTrackId,
+  playlistName,
+}: TrackItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: track.id, disabled: !isOwn });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  const isCurrentTrack = currentTrackId === track.track?.id;
+  const isInherited = !isOwn;
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={[
+        "group grid grid-cols-[16px_auto_1fr_auto] gap-3 px-3 py-2 rounded-md items-center",
+        "hover:bg-white/5 transition-colors cursor-pointer",
+        isCurrentTrack ? "text-accent-purple" : "",
+      ].join(" ")}
+    >
+      {/* ドラッグハンドル（直接追加の曲のみ） */}
+      <span
+        className={[
+          "flex items-center justify-center text-foreground/20",
+          "transition-opacity",
+          isOwn
+            ? "opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing"
+            : "opacity-0 pointer-events-none",
+        ].join(" ")}
+        {...(isOwn ? { ...attributes, ...listeners } : {})}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical size={13} />
+      </span>
+
+      {/* 曲番号 */}
+      <span className="w-6 text-center text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+        {isCurrentTrack ? (
+          <Music2 size={12} className="text-accent-purple mx-auto" />
+        ) : (
+          index + 1
+        )}
+      </span>
+
+      {/* タイトル + アーティスト */}
+      <div className="min-w-0">
+        <p className="text-sm font-medium truncate">
+          {track.track?.name ?? track.spotifyTrackId}
+        </p>
+        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+          <p className="text-xs text-foreground/50 truncate">
+            {track.track?.artists.join(", ")}
+          </p>
+          {isInherited && (
+            <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-accent-purple/10 text-accent-purple/70">
+              継承 · {track.sourcePlaylistName}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 再生時間 */}
+      <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+        {track.track ? formatDuration(track.track.durationMs) : "--:--"}
+      </span>
+    </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// メインコンポーネント
+// ---------------------------------------------------------------------------
+
 export function PlaylistDetailView({ id }: Props) {
   const router = useRouter();
   const [isAddingChild, setIsAddingChild] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
+  // DnD 用のローカル順序（楽観的更新）
+  const [localTracks, setLocalTracks] = useState<TrackWithSource[] | null>(null);
 
   const { data: playlists } = usePlaylistTree();
   const { data: tracks, isLoading, isError } = usePlaylistTracks(id);
   const { playPlaylist, currentTrack, sourcePlaylistId } = usePlayerStore();
   const { mutate: deletePlaylist, isPending: isDeleting } = useDeletePlaylist();
+  const { mutate: reorderTracks } = useReorderTracks(id);
+
+  // サーバーからデータが更新されたらローカル状態をリセット
+  useEffect(() => {
+    setLocalTracks(null);
+  }, [tracks]);
+
+  const displayTracks = localTracks ?? tracks ?? [];
 
   const { mutate: exportPlaylist, isPending: isExporting } = useMutation({
     mutationFn: async () => {
@@ -60,6 +197,31 @@ export function PlaylistDetailView({ id }: Props) {
   });
 
   const playlist = playlists ? findPlaylistById(playlists, id) : undefined;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || displayTracks.length === 0) return;
+
+    const oldIndex = displayTracks.findIndex((t) => t.id === String(active.id));
+    const newIndex = displayTracks.findIndex((t) => t.id === String(over.id));
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newTracks = arrayMove(displayTracks, oldIndex, newIndex);
+    setLocalTracks(newTracks);
+
+    // 直接所属するトラックの新しい ID 順をサーバーに送信
+    const newOwnTrackIds = newTracks
+      .filter((t) => t.playlistId === id)
+      .map((t) => t.id);
+
+    reorderTracks(newOwnTrackIds, {
+      onError: () => setLocalTracks(null), // エラー時は元の順序に戻す
+    });
+  };
 
   const handlePlay = async (includeChildren: boolean, shuffle: boolean) => {
     if (!tracks) return;
@@ -99,7 +261,11 @@ export function PlaylistDetailView({ id }: Props) {
       <div className="flex items-start gap-4">
         <div
           className="w-20 h-20 rounded-xl shrink-0 overflow-hidden"
-          style={{ background: playlist?.imageUrl ? undefined : (playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)") }}
+          style={{
+            background: playlist?.imageUrl
+              ? undefined
+              : (playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)"),
+          }}
         >
           {playlist?.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -187,9 +353,10 @@ export function PlaylistDetailView({ id }: Props) {
       </div>
 
       {/* トラックリスト */}
-      {tracks && tracks.length > 0 ? (
+      {displayTracks.length > 0 ? (
         <div>
-          <div className="grid grid-cols-[auto_1fr_auto] gap-4 px-3 py-2 text-foreground/30 text-xs border-b border-white/5">
+          <div className="grid grid-cols-[16px_auto_1fr_auto] gap-3 px-3 py-2 text-foreground/30 text-xs border-b border-white/5">
+            <span />
             <span className="w-6 text-center">#</span>
             <span>タイトル</span>
             <span className="flex items-center">
@@ -197,48 +364,29 @@ export function PlaylistDetailView({ id }: Props) {
             </span>
           </div>
 
-          <ul className="mt-1">
-            {tracks.map((t, i) => {
-              const isCurrentTrack = currentTrack?.id === t.track?.id;
-              return (
-                <li
-                  key={t.id}
-                  className={[
-                    "grid grid-cols-[auto_1fr_auto] gap-4 px-3 py-2 rounded-md items-center hover:bg-white/5 transition-colors cursor-pointer",
-                    isCurrentTrack ? "text-accent-purple" : "",
-                  ].join(" ")}
-                >
-                  <span className="w-6 text-center text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
-                    {isCurrentTrack ? (
-                      <Music2 size={12} className="text-accent-purple mx-auto" />
-                    ) : (
-                      i + 1
-                    )}
-                  </span>
-
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {t.track?.name ?? t.spotifyTrackId}
-                    </p>
-                    <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                      <p className="text-xs text-foreground/50 truncate">
-                        {t.track?.artists.join(", ")}
-                      </p>
-                      {t.sourcePlaylistName !== playlist?.name && (
-                        <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-accent-purple/10 text-accent-purple/70">
-                          継承 · {t.sourcePlaylistName}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
-                    {t.track ? formatDuration(t.track.durationMs) : "--:--"}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={displayTracks.map((t) => t.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="mt-1">
+                {displayTracks.map((t, i) => (
+                  <SortableTrackItem
+                    key={t.id}
+                    track={t}
+                    index={i}
+                    isOwn={t.playlistId === id}
+                    currentTrackId={currentTrack?.id}
+                    playlistName={playlist?.name}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         </div>
       ) : (
         <div className="text-center py-12">

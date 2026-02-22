@@ -19,6 +19,8 @@ export function CallbackHandler() {
 
     if (token) {
       localStorage.setItem("nestify_token", token);
+      // middleware が読めるようにクッキーにも保存（30日間）
+      document.cookie = `nestify_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
       router.replace("/playlists");
     } else {
       router.replace("/login");

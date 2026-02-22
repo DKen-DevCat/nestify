@@ -319,6 +319,46 @@ export async function deletePlaylist(
   return { ok: true, data: { deleted: true } };
 }
 
+/** プレイリスト内トラックの並べ替え */
+export async function reorderTracks(
+  playlistId: string,
+  orderedIds: string[],
+  userId: string,
+): Promise<Result<{ reordered: boolean }>> {
+  if (isMockMode) {
+    return { ok: true, data: { reordered: true } };
+  }
+
+  if (!db) return { ok: false, error: "DB not initialized", status: 500 };
+
+  // 所有権チェック
+  const ownerCheck = await db
+    .select({ id: playlists.id })
+    .from(playlists)
+    .where(and(eq(playlists.id, playlistId), eq(playlists.userId, userId)));
+
+  if (ownerCheck.length === 0) {
+    return { ok: false, error: "Playlist not found", status: 404 };
+  }
+
+  // order を一括更新
+  await Promise.all(
+    orderedIds.map((trackId, index) =>
+      db!
+        .update(playlistTracks)
+        .set({ order: index })
+        .where(
+          and(
+            eq(playlistTracks.id, trackId),
+            eq(playlistTracks.playlistId, playlistId),
+          ),
+        ),
+    ),
+  );
+
+  return { ok: true, data: { reordered: true } };
+}
+
 /** 子孫を含む全トラック取得（再帰 CTE） */
 export async function getTracksRecursive(
   id: string,
