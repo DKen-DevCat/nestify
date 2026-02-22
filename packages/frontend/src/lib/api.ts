@@ -39,10 +39,14 @@ async function apiFetch<T>(
     return { ok: false, error: "Unauthorized" };
   }
 
-  const json = (await res.json()) as
-    | { ok: true; data: T }
-    | { ok: false; error: string };
-  return json;
+  try {
+    const json = (await res.json()) as
+      | { ok: true; data: T }
+      | { ok: false; error: string };
+    return json;
+  } catch {
+    return { ok: false, error: `Server error (${res.status})` };
+  }
 }
 
 export interface TrackWithSource {

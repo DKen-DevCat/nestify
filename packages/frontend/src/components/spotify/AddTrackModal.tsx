@@ -39,20 +39,23 @@ export function AddTrackModal({ playlistId, onClose }: Props) {
   }, []);
 
   const {
-    data: result,
+    data: tracks,
     isFetching,
     isError,
-  } = useQuery({
+    error,
+  } = useQuery<SpotifyTrack[], Error>({
     queryKey: ["spotify-search", debouncedQuery],
-    queryFn: () => api.spotify.search(debouncedQuery),
+    queryFn: async () => {
+      const result = await api.spotify.search(debouncedQuery);
+      if (!result.ok) throw new Error(result.error);
+      return result.data;
+    },
     enabled: debouncedQuery.length > 0,
     staleTime: 30_000,
+    retry: 1,
   });
 
   const { mutate: addTrack, isPending: isAdding } = useAddTrack(playlistId);
-
-  const tracks: SpotifyTrack[] =
-    result?.ok ? result.data : [];
 
   const handleAdd = (track: SpotifyTrack) => {
     if (addedIds.has(track.id) || isAdding) return;
@@ -122,22 +125,27 @@ export function AddTrackModal({ playlistId, onClose }: Props) {
 
           {/* エラー */}
           {isError && (
-            <p className="text-accent-pink text-xs text-center py-8">
-              検索に失敗しました。再度お試しください。
-            </p>
+            <div className="text-center py-8">
+              <p className="text-accent-pink text-xs">
+                {error?.message?.includes("503")
+                  ? "Spotify 連携が無効です。管理者にお問い合わせください。"
+                  : "検索に失敗しました。再度お試しください。"}
+              </p>
+              <p className="text-foreground/20 text-xs mt-1">{error?.message}</p>
+            </div>
           )}
 
           {/* 結果なし */}
-          {!isFetching && debouncedQuery.length > 0 && tracks.length === 0 && !isError && (
+          {!isFetching && debouncedQuery.length > 0 && (tracks?.length ?? 0) === 0 && !isError && (
             <p className="text-foreground/30 text-sm text-center py-8">
               「{debouncedQuery}」に一致する曲が見つかりませんでした
             </p>
           )}
 
           {/* トラックリスト */}
-          {tracks.length > 0 && (
+          {(tracks?.length ?? 0) > 0 && (
             <ul className="p-2">
-              {tracks.map((track) => {
+              {tracks!.map((track) => {
                 const added = addedIds.has(track.id);
                 return (
                   <li

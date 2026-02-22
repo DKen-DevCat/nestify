@@ -136,18 +136,24 @@ export async function searchTracks(
   if (!tokenResult.ok) return tokenResult;
 
   const token = tokenResult.data;
-  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=20&market=JP`;
+  // market を指定しないことで全世界の楽曲を検索対象にする（部分一致検索も Spotify が自動対応）
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=20`;
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!res.ok) {
-    return { ok: false, error: "Failed to search Spotify tracks", status: 500 };
+    const body = await res.text().catch(() => "");
+    return {
+      ok: false,
+      error: `Spotify search failed (${res.status})${body ? `: ${body.slice(0, 100)}` : ""}`,
+      status: 500,
+    };
   }
 
   const data = (await res.json()) as {
-    tracks: {
+    tracks?: {
       items: Array<{
         id: string;
         name: string;
@@ -158,6 +164,11 @@ export async function searchTracks(
       }>;
     };
   };
+
+  // Spotify が予期しない構造を返した場合の安全処理
+  if (!data.tracks?.items) {
+    return { ok: true, data: [] };
+  }
 
   const tracks: SpotifyTrack[] = data.tracks.items.map((item) => ({
     id: item.id,

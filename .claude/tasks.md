@@ -138,6 +138,12 @@
 - [x] Bug 2: Spotifyインポート重複 → playlists.spotifyPlaylistId カラム追加、インポート前に重複チェック
 - [x] Bug 3: プレイリストアイコン → playlists.imageUrl カラム追加、インポート時に Spotify カバー画像 URL 保存・フロントで表示
 
+### バグ修正: 曲検索失敗 + 部分一致対応
+- [x] `apiFetch` で非 JSON レスポンスの例外をハンドリング
+- [x] `AddTrackModal` の `queryFn` で `{ ok: false }` を throw に変換
+- [x] `searchTracks` から `market=JP` を削除（全世界の楽曲を対象に）
+- [x] `data.tracks?.items` に null チェック追加
+
 ## Spotify 曲検索 & プレイリスト追加
 
 - [x] BE: `searchTracks(query, userId)` を `spotifyService.ts` に追加
