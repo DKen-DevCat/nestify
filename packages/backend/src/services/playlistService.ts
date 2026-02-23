@@ -319,6 +319,58 @@ export async function deletePlaylist(
   return { ok: true, data: { deleted: true } };
 }
 
+/** トラックと子プレイリストの混在並び替え */
+export async function reorderItems(
+  playlistId: string,
+  items: Array<{ type: "track" | "playlist"; id: string }>,
+  userId: string,
+): Promise<Result<{ reordered: boolean }>> {
+  if (isMockMode) {
+    return { ok: true, data: { reordered: true } };
+  }
+
+  if (!db) return { ok: false, error: "DB not initialized", status: 500 };
+
+  // 所有権チェック
+  const ownerCheck = await db
+    .select({ id: playlists.id })
+    .from(playlists)
+    .where(and(eq(playlists.id, playlistId), eq(playlists.userId, userId)));
+
+  if (ownerCheck.length === 0) {
+    return { ok: false, error: "Playlist not found", status: 404 };
+  }
+
+  // order を一括更新
+  await Promise.all(
+    items.map((item, index) => {
+      if (item.type === "track") {
+        return db!
+          .update(playlistTracks)
+          .set({ order: index })
+          .where(
+            and(
+              eq(playlistTracks.id, item.id),
+              eq(playlistTracks.playlistId, playlistId),
+            ),
+          );
+      } else {
+        return db!
+          .update(playlists)
+          .set({ order: index })
+          .where(
+            and(
+              eq(playlists.id, item.id),
+              eq(playlists.parentId, playlistId),
+            ),
+          );
+      }
+    }),
+  );
+
+  return { ok: true, data: { reordered: true } };
+}
+
 /** プレイリスト内トラックの並べ替え */
 export async function reorderTracks(
   playlistId: string,

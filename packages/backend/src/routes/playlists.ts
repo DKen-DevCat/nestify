@@ -10,6 +10,7 @@ import {
   deletePlaylist,
   getTracksRecursive,
   reorderTracks,
+  reorderItems,
   addTrack,
 } from "../services/playlistService";
 import { enrichTracksWithSpotifyData } from "../services/spotifyService";
@@ -86,6 +87,31 @@ playlistRoutes.post("/", zValidator("json", createSchema), async (c) => {
   }
   return c.json({ ok: true, data: result.data }, 201);
 });
+
+playlistRoutes.patch(
+  "/:id/items/reorder",
+  zValidator(
+    "json",
+    z.object({
+      items: z.array(
+        z.object({
+          type: z.enum(["track", "playlist"]),
+          id: z.string().uuid(),
+        }),
+      ),
+    }),
+  ),
+  async (c) => {
+    const userId = c.get("userId");
+    const id = c.req.param("id");
+    const { items } = c.req.valid("json");
+    const result = await reorderItems(id, items, userId);
+    if (!result.ok) {
+      return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
+    }
+    return c.json({ ok: true, data: result.data });
+  },
+);
 
 playlistRoutes.patch("/:id", zValidator("json", updateSchema), async (c) => {
   const userId = c.get("userId");

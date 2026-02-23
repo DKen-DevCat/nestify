@@ -173,3 +173,10 @@
 - [x] middleware.ts: Cookie ベース認証ルーティング（/playlists→/login、/login→/playlists、/→分岐）
 - [x] CallbackHandler: JWT をクッキー（SameSite=Lax, 30日）にも保存
 - [x] api.ts: 401 時にクッキー + localStorage をクリアして /login へ
+
+## 混在 DnD 並び替え + 子 PL 名前変更（完了）
+- [x] playlistService.ts: reorderItems 関数追加（トラックと子 PL を統一的に並び替え）
+- [x] routes/playlists.ts: PATCH /:id/items/reorder エンドポイント追加（PATCH /:id より前に登録）
+- [x] api.ts: reorderItems メソッド追加
+- [x] usePlaylistMutations.ts: useReorderItems フック追加
+- [x] PlaylistDetailView.tsx: PlaylistLevelContent + SortablePlaylistSection で混在 DnD + 子 PL インライン名前変更
