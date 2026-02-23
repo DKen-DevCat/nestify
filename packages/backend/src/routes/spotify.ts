@@ -6,6 +6,7 @@ import {
   getUserPlaylists,
   importSpotifyPlaylist,
   exportToSpotify,
+  exportSubtreeToSpotify,
   searchTracks,
 } from "../services/spotifyService";
 
@@ -66,11 +67,22 @@ spotifyRoutes.post(
   },
 );
 
-/** Nestify プレイリストを Spotify に書き出し */
+/** Nestify プレイリストを Spotify に書き出し（単体） */
 spotifyRoutes.post("/export/:playlistId", async (c) => {
   const userId = c.get("userId");
   const playlistId = c.req.param("playlistId");
   const result = await exportToSpotify(playlistId, userId);
+  if (!result.ok) {
+    return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
+  }
+  return c.json({ ok: true, data: result.data });
+});
+
+/** Nestify プレイリスト + 全子孫を Spotify にそれぞれ書き出し */
+spotifyRoutes.post("/export-tree/:playlistId", async (c) => {
+  const userId = c.get("userId");
+  const playlistId = c.req.param("playlistId");
+  const result = await exportSubtreeToSpotify(playlistId, userId);
   if (!result.ok) {
     return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
   }

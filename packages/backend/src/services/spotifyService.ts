@@ -2,8 +2,10 @@ import type { Playlist, SpotifyTrack } from "@nestify/shared";
 import { isMockMode, db } from "../db/index";
 import { users, playlists, playlistTracks } from "../db/schema";
 import { eq, and } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { create, getTracksRecursive } from "./playlistService";
 import type { Result, TrackWithSource } from "./playlistService";
+import { MOCK_PLAYLISTS_FLAT } from "../db/mock";
 
 // ---------------------------------------------------------------------------
 // Spotify API 型定義
@@ -523,4 +525,65 @@ export async function exportToSpotify(
     ok: true,
     data: { spotifyPlaylistId: created.id, url: created.external_urls.spotify },
   };
+}
+
+/** プレイリスト + 全子孫プレイリストをそれぞれ独立した Spotify プレイリストとして書き出す */
+export async function exportSubtreeToSpotify(
+  rootId: string,
+  userId: string,
+): Promise<Result<Record<string, { spotifyPlaylistId: string; url: string }>>> {
+  // ── 全子孫 ID を収集 ──────────────────────────────────────────────────────
+  let descendantIds: string[];
+
+  if (isMockMode) {
+    // mock: MOCK_PLAYLISTS_FLAT を再帰的に辿る
+    const collect = (id: string): string[] => {
+      const children = MOCK_PLAYLISTS_FLAT.filter((p) => p.parentId === id);
+      return [id, ...children.flatMap((c) => collect(c.id))];
+    };
+    descendantIds = collect(rootId);
+  } else {
+    if (!db) return { ok: false, error: "DB not initialized", status: 500 };
+
+    const ownerCheck = await db
+      .select({ id: playlists.id })
+      .from(playlists)
+      .where(and(eq(playlists.id, rootId), eq(playlists.userId, userId)));
+    if (ownerCheck.length === 0) {
+      return { ok: false, error: "Playlist not found", status: 404 };
+    }
+
+    const rows = (await db.execute(sql`
+      WITH RECURSIVE descendants AS (
+        SELECT id FROM playlists WHERE id = ${rootId}
+        UNION ALL
+        SELECT p.id FROM playlists p
+        INNER JOIN descendants d ON p.parent_id = d.id
+      )
+      SELECT id FROM descendants
+    `)) as unknown as { id: string }[];
+
+    descendantIds = rows.map((r) => r.id);
+  }
+
+  // ── 各プレイリストを順に書き出す ──────────────────────────────────────────
+  const exported: Record<string, { spotifyPlaylistId: string; url: string }> = {};
+
+  for (const pid of descendantIds) {
+    const result = await exportToSpotify(pid, userId);
+    if (result.ok) {
+      exported[pid] = result.data;
+    }
+    // 曲なし等の失敗はスキップ（他のプレイリストは続行）
+  }
+
+  if (!exported[rootId]) {
+    return {
+      ok: false,
+      error: "ルートプレイリストの書き出しに失敗しました（曲がない可能性があります）",
+      status: 400,
+    };
+  }
+
+  return { ok: true, data: exported };
 }

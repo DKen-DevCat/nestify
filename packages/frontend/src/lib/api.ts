@@ -111,6 +111,11 @@ export const api = {
         `/api/spotify/export/${playlistId}`,
         { method: "POST" },
       ),
+    exportTree: (playlistId: string) =>
+      apiFetch<Record<string, { spotifyPlaylistId: string; url: string }>>(
+        `/api/spotify/export-tree/${playlistId}`,
+        { method: "POST" },
+      ),
     search: (q: string) =>
       apiFetch<import("@nestify/shared").SpotifyTrack[]>(
         `/api/spotify/search?q=${encodeURIComponent(q)}`,

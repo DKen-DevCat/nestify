@@ -190,3 +190,10 @@
 - [x] layout.tsx: PlaylistsLayoutClient に委譲（Server Component 維持）
 - [x] tsc --noEmit でバックエンド・フロントエンド両方エラーなし確認
 - [x] コミット分割: バグ修正（BE）+ サイドバー・レスポンシブ（FE）
+
+## Spotify 書き出し機能拡張（完了）
+- [x] spotifyService.ts: exportSubtreeToSpotify 追加（全子孫 PL をそれぞれ独立した Spotify PL として書き出し）
+- [x] routes/spotify.ts: POST /api/spotify/export-tree/:playlistId エンドポイント追加
+- [x] api.ts: api.spotify.exportTree 追加
+- [x] PlaylistDetailView.tsx: exportedUrl → exportedUrls(Record)、書き出しボタンと Spotify で開くボタンを分離（書き出し完了後に活性化）
+- [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認

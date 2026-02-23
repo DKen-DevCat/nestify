@@ -516,7 +516,9 @@ export function PlaylistDetailView({ id }: Props) {
   const [isAddingChild, setIsAddingChild] = useState(false);
   const [isAddingTrack, setIsAddingTrack] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [exportedUrl, setExportedUrl] = useState<string | null>(null);
+  const [exportedUrls, setExportedUrls] = useState<
+    Record<string, { spotifyPlaylistId: string; url: string }>
+  >({});
 
   // インライン名前変更
   const [isRenaming, setIsRenaming] = useState(false);
@@ -550,12 +552,12 @@ export function PlaylistDetailView({ id }: Props) {
 
   const { mutate: exportPlaylist, isPending: isExporting } = useMutation({
     mutationFn: async () => {
-      const res = await api.spotify.export(id);
+      const res = await api.spotify.exportTree(id);
       if (!res.ok) throw new Error(res.error);
       return res.data;
     },
     onSuccess: (data) => {
-      setExportedUrl(data.url);
+      setExportedUrls(data);
     },
   });
 
@@ -705,9 +707,24 @@ export function PlaylistDetailView({ id }: Props) {
               <ListPlus size={16} />
               曲を追加
             </button>
-            {exportedUrl ? (
+            {/* 書き出しボタン */}
+            <button
+              type="button"
+              onClick={() => exportPlaylist()}
+              disabled={isExporting}
+              className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors disabled:opacity-40"
+            >
+              {isExporting ? (
+                <div className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Upload size={16} />
+              )}
+              Spotify へ書き出し
+            </button>
+            {/* Spotify で開くボタン（書き出し完了後に活性化） */}
+            {exportedUrls[id] ? (
               <a
-                href={exportedUrl}
+                href={exportedUrls[id].url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-accent-green/30 text-accent-green text-sm hover:bg-accent-green/10 transition-colors"
@@ -718,16 +735,11 @@ export function PlaylistDetailView({ id }: Props) {
             ) : (
               <button
                 type="button"
-                onClick={() => exportPlaylist()}
-                disabled={isExporting}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors disabled:opacity-40"
+                disabled
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-white/10 text-foreground/20 text-sm cursor-not-allowed"
               >
-                {isExporting ? (
-                  <div className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Upload size={16} />
-                )}
-                Spotify へ書き出し
+                <ExternalLink size={14} />
+                Spotify で開く
               </button>
             )}
             <button
