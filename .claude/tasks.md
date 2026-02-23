@@ -188,4 +188,5 @@
 - [x] PlaylistSidebar.tsx: useSidebar 統合・ChevronLeft/Right 開閉ボタン・ドラッグハンドル・onNavigate prop・モーダルを aside 外に移動
 - [x] PlaylistsLayoutClient.tsx: 新規作成（モバイル overlay drawer + ハンバーガーヘッダー管理）
 - [x] layout.tsx: PlaylistsLayoutClient に委譲（Server Component 維持）
-- [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認
+- [x] tsc --noEmit でバックエンド・フロントエンド両方エラーなし確認
+- [x] コミット分割: バグ修正（BE）+ サイドバー・レスポンシブ（FE）
