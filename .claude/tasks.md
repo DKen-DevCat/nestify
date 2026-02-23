@@ -161,7 +161,13 @@
 - [x] FE: `AddTrackModal.tsx` を新規作成
 - [x] FE: `PlaylistDetailView.tsx` に「曲を追加」ボタン統合
 
-### DnD トラック並べ替え + Auth UX 最適化（完了）
+### 追加機能実装
+
+- [x] プレイリスト名のインライン変更機能
+- [x] Spotify エクスポートを既存 playlist の更新に対応（spotifyPlaylistId で管理）
+- [x] 詳細ページで子孫プレイリストをツリー形式で表示
+
+## DnD トラック並べ替え + Auth UX 最適化（完了）
 - [x] PATCH /api/playlists/:id/tracks/reorder エンドポイント追加
 - [x] PlaylistDetailView: 直接追加曲のみドラッグ可、楽観的更新でエラー時リセット
 - [x] middleware.ts: Cookie ベース認証ルーティング（/playlists→/login、/login→/playlists、/→分岐）

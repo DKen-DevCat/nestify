@@ -386,6 +386,7 @@ export async function importSpotifyPlaylist(
 
 // ---------------------------------------------------------------------------
 // Nestify プレイリストを Spotify に書き出し
+// 既存の spotifyPlaylistId があれば更新、なければ新規作成して ID を保存する
 // ---------------------------------------------------------------------------
 
 export async function exportToSpotify(
@@ -405,7 +406,72 @@ export async function exportToSpotify(
     return { ok: false, error: "No tracks to export", status: 400 };
   }
 
-  // Spotify ユーザー ID を取得
+  const uris = tracksResult.data.map((t) => `spotify:track:${t.spotifyTrackId}`);
+
+  // プレイリスト情報を取得（名前 + 既存の spotifyPlaylistId）
+  let playlistName = "Nestify Export";
+  let existingSpotifyId: string | null = null;
+
+  if (!isMockMode && db) {
+    const pl = await db
+      .select({ name: playlists.name, spotifyPlaylistId: playlists.spotifyPlaylistId })
+      .from(playlists)
+      .where(eq(playlists.id, playlistId));
+    if (pl[0]) {
+      playlistName = pl[0].name;
+      existingSpotifyId = pl[0].spotifyPlaylistId ?? null;
+    }
+  }
+
+  // --- 既存 Spotify プレイリストへの更新を試みる ---
+  if (existingSpotifyId) {
+    // メタデータ更新（名前・説明）
+    const metaRes = await fetch(
+      `https://api.spotify.com/v1/playlists/${existingSpotifyId}`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ name: playlistName, description: "Exported from Nestify" }),
+      },
+    );
+
+    // 404 や権限エラーの場合は新規作成にフォールバック
+    if (metaRes.ok || metaRes.status === 200) {
+      // トラックを差し替え（PUT = 全置換、100件まで）
+      const replaceRes = await fetch(
+        `https://api.spotify.com/v1/playlists/${existingSpotifyId}/tracks`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ uris: uris.slice(0, 100) }),
+        },
+      );
+
+      if (replaceRes.ok) {
+        // 101件目以降を追加（POST = append）
+        for (let i = 100; i < uris.length; i += 100) {
+          await fetch(`https://api.spotify.com/v1/playlists/${existingSpotifyId}/tracks`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ uris: uris.slice(i, i + 100) }),
+          });
+        }
+
+        return {
+          ok: true,
+          data: {
+            spotifyPlaylistId: existingSpotifyId,
+            url: `https://open.spotify.com/playlist/${existingSpotifyId}`,
+          },
+        };
+      }
+    }
+
+    // 更新失敗 → 新規作成にフォールバック（spotifyPlaylistId をリセット）
+    existingSpotifyId = null;
+  }
+
+  // --- 新規 Spotify プレイリストを作成 ---
   const meRes = await fetch("https://api.spotify.com/v1/me", {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -414,25 +480,11 @@ export async function exportToSpotify(
   }
   const me = (await meRes.json()) as { id: string };
 
-  // プレイリスト名を取得
-  let playlistName = "Nestify Export";
-  if (!isMockMode && db) {
-    const pl = await db
-      .select({ name: playlists.name })
-      .from(playlists)
-      .where(eq(playlists.id, playlistId));
-    if (pl[0]) playlistName = pl[0].name;
-  }
-
-  // Spotify に新規プレイリストを作成
   const createRes = await fetch(
     `https://api.spotify.com/v1/users/${me.id}/playlists`,
     {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         name: playlistName,
         description: "Exported from Nestify",
@@ -450,25 +502,21 @@ export async function exportToSpotify(
     external_urls: { spotify: string };
   };
 
-  // トラックを 100 件ずつ追加（Spotify API の上限）
-  const uris = tracksResult.data.map(
-    (t) => `spotify:track:${t.spotifyTrackId}`,
-  );
-  const CHUNK = 100;
+  // トラックを 100 件ずつ追加
+  for (let i = 0; i < uris.length; i += 100) {
+    await fetch(`https://api.spotify.com/v1/playlists/${created.id}/tracks`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ uris: uris.slice(i, i + 100) }),
+    });
+  }
 
-  for (let i = 0; i < uris.length; i += CHUNK) {
-    const chunk = uris.slice(i, i + CHUNK);
-    await fetch(
-      `https://api.spotify.com/v1/playlists/${created.id}/tracks`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uris: chunk }),
-      },
-    );
+  // 作成した spotifyPlaylistId を DB に保存（次回以降は更新として処理）
+  if (!isMockMode && db) {
+    await db
+      .update(playlists)
+      .set({ spotifyPlaylistId: created.id })
+      .where(eq(playlists.id, playlistId));
   }
 
   return {

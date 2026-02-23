@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -29,11 +29,18 @@ import {
   ExternalLink,
   GripVertical,
   ListPlus,
+  ChevronDown,
+  ChevronRight,
+  Pencil,
 } from "lucide-react";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { usePlayerStore } from "@/stores/playerStore";
-import { useDeletePlaylist, useReorderTracks } from "@/hooks/usePlaylistMutations";
+import {
+  useDeletePlaylist,
+  useReorderTracks,
+  useUpdatePlaylist,
+} from "@/hooks/usePlaylistMutations";
 import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
 import { AddTrackModal } from "@/components/spotify/AddTrackModal";
 import { api } from "@/lib/api";
@@ -66,34 +73,34 @@ function formatDuration(ms: number): string {
 }
 
 function formatDate(isoString: string): string {
-  const date = new Date(isoString);
-  if (isNaN(date.getTime())) return "--";
-  return date.toLocaleDateString("ja-JP", {
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-  });
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return "--";
+    return date.toLocaleDateString("ja-JP", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    });
+  } catch {
+    return "--";
+  }
 }
 
 // ---------------------------------------------------------------------------
-// ソータブルなトラック行
+// ソータブルなトラック行（直接追加のトラック用）
 // ---------------------------------------------------------------------------
 
-interface TrackItemProps {
+interface SortableTrackItemProps {
   track: TrackWithSource;
   index: number;
-  isOwn: boolean;
   currentTrackId: string | undefined;
-  playlistName: string | undefined;
 }
 
 function SortableTrackItem({
   track,
   index,
-  isOwn,
   currentTrackId,
-  playlistName,
-}: TrackItemProps) {
+}: SortableTrackItemProps) {
   const {
     attributes,
     listeners,
@@ -101,7 +108,7 @@ function SortableTrackItem({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: track.id, disabled: !isOwn });
+  } = useSortable({ id: track.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -111,7 +118,6 @@ function SortableTrackItem({
   };
 
   const isCurrentTrack = currentTrackId === track.track?.id;
-  const isInherited = !isOwn;
 
   return (
     <li
@@ -123,22 +129,15 @@ function SortableTrackItem({
         isCurrentTrack ? "text-accent-purple" : "",
       ].join(" ")}
     >
-      {/* ドラッグハンドル（直接追加の曲のみ） */}
       <span
-        className={[
-          "flex items-center justify-center text-foreground/20",
-          "transition-opacity",
-          isOwn
-            ? "opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing"
-            : "opacity-0 pointer-events-none",
-        ].join(" ")}
-        {...(isOwn ? { ...attributes, ...listeners } : {})}
+        className="flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
+        {...attributes}
+        {...listeners}
         onClick={(e) => e.stopPropagation()}
       >
         <GripVertical size={13} />
       </span>
 
-      {/* 曲番号 */}
       <span className="w-6 text-center text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
         {isCurrentTrack ? (
           <Music2 size={12} className="text-accent-purple mx-auto" />
@@ -147,7 +146,6 @@ function SortableTrackItem({
         )}
       </span>
 
-      {/* アルバムアート + タイトル + アーティスト */}
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-9 h-9 rounded shrink-0 overflow-hidden bg-white/5">
           {track.track?.imageUrl ? (
@@ -158,41 +156,192 @@ function SortableTrackItem({
               className="w-full h-full object-cover"
             />
           ) : (
-            <Music2 size={12} className="w-full h-full p-2 text-foreground/20" />
+            <div className="w-full h-full flex items-center justify-center">
+              <Music2 size={12} className="text-foreground/20" />
+            </div>
           )}
         </div>
         <div className="min-w-0">
           <p className="text-sm font-medium truncate">
             {track.track?.name ?? track.spotifyTrackId}
           </p>
-          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-            <p className="text-xs text-foreground/50 truncate">
-              {track.track?.artists.join(", ")}
-            </p>
-            {isInherited && (
-              <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-accent-purple/10 text-accent-purple/70">
-                継承 · {track.sourcePlaylistName}
-              </span>
-            )}
-          </div>
+          <p className="text-xs text-foreground/50 truncate">
+            {track.track?.artists.join(", ")}
+          </p>
         </div>
       </div>
 
-      {/* アルバム名 */}
       <span className="text-foreground/40 text-xs truncate">
         {track.track?.album ?? "--"}
       </span>
 
-      {/* 追加日 */}
       <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
         {formatDate(track.addedAt)}
       </span>
 
-      {/* 再生時間 */}
       <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
         {track.track ? formatDuration(track.track.durationMs) : "--:--"}
       </span>
     </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 非ソータブルなトラック行（子孫プレイリスト内のトラック用）
+// ---------------------------------------------------------------------------
+
+interface SimpleTrackItemProps {
+  track: TrackWithSource;
+  index: number;
+  currentTrackId: string | undefined;
+}
+
+function SimpleTrackItem({
+  track,
+  index,
+  currentTrackId,
+}: SimpleTrackItemProps) {
+  const isCurrentTrack = currentTrackId === track.track?.id;
+
+  return (
+    <li
+      className={[
+        "grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-md items-center",
+        "hover:bg-white/5 transition-colors",
+        isCurrentTrack ? "text-accent-purple" : "",
+      ].join(" ")}
+    >
+      <span className="w-6 text-center text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+        {isCurrentTrack ? (
+          <Music2 size={12} className="text-accent-purple mx-auto" />
+        ) : (
+          index + 1
+        )}
+      </span>
+
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-8 h-8 rounded shrink-0 overflow-hidden bg-white/5">
+          {track.track?.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={track.track.imageUrl}
+              alt={track.track.album}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Music2 size={10} className="text-foreground/20" />
+            </div>
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium truncate">
+            {track.track?.name ?? track.spotifyTrackId}
+          </p>
+          <p className="text-xs text-foreground/50 truncate">
+            {track.track?.artists.join(", ")}
+          </p>
+        </div>
+      </div>
+
+      <span className="text-foreground/40 text-xs truncate">
+        {track.track?.album ?? "--"}
+      </span>
+
+      <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+        {track.track ? formatDuration(track.track.durationMs) : "--:--"}
+      </span>
+    </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 子孫プレイリストのセクション（再帰）
+// ---------------------------------------------------------------------------
+
+interface ChildPlaylistSectionProps {
+  playlist: Playlist;
+  tracksByPlaylist: Map<string, TrackWithSource[]>;
+  depth: number;
+  currentTrackId: string | undefined;
+}
+
+function ChildPlaylistSection({
+  playlist,
+  tracksByPlaylist,
+  depth,
+  currentTrackId,
+}: ChildPlaylistSectionProps) {
+  const [expanded, setExpanded] = useState(true);
+  const myTracks = tracksByPlaylist.get(playlist.id) ?? [];
+  const hasContent =
+    myTracks.length > 0 || (playlist.children ?? []).length > 0;
+  const totalTracks = myTracks.length;
+
+  return (
+    <div
+      className="mt-3"
+      style={{ marginLeft: depth > 0 ? `${depth * 20}px` : undefined }}
+    >
+      {/* セクションヘッダー */}
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-white/5 transition-colors text-left"
+      >
+        {expanded ? (
+          <ChevronDown size={14} className="text-foreground/40 shrink-0" />
+        ) : (
+          <ChevronRight size={14} className="text-foreground/40 shrink-0" />
+        )}
+        {playlist.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={playlist.imageUrl}
+            alt={playlist.name}
+            className="w-5 h-5 rounded shrink-0 object-cover"
+          />
+        ) : (
+          <span className="text-base leading-none shrink-0">
+            {playlist.icon}
+          </span>
+        )}
+        <span className="text-sm font-medium truncate">{playlist.name}</span>
+        <span className="ml-auto text-xs text-foreground/30 shrink-0 font-[family-name:var(--font-space-mono)]">
+          {totalTracks}曲
+        </span>
+      </button>
+
+      {/* コンテンツ（展開時） */}
+      {expanded && hasContent && (
+        <div className="mt-1 border-l border-white/10 ml-3.5 pl-3">
+          {/* このプレイリストの直接のトラック */}
+          {myTracks.length > 0 && (
+            <ul className="space-y-0.5">
+              {myTracks.map((t, i) => (
+                <SimpleTrackItem
+                  key={t.id}
+                  track={t}
+                  index={i}
+                  currentTrackId={currentTrackId}
+                />
+              ))}
+            </ul>
+          )}
+
+          {/* 子プレイリストを再帰表示 */}
+          {(playlist.children ?? []).map((child) => (
+            <ChildPlaylistSection
+              key={child.id}
+              playlist={child}
+              tracksByPlaylist={tracksByPlaylist}
+              depth={0}
+              currentTrackId={currentTrackId}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -206,21 +355,46 @@ export function PlaylistDetailView({ id }: Props) {
   const [isAddingTrack, setIsAddingTrack] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [exportedUrl, setExportedUrl] = useState<string | null>(null);
-  // DnD 用のローカル順序（楽観的更新）
-  const [localTracks, setLocalTracks] = useState<TrackWithSource[] | null>(null);
+
+  // インライン名前変更
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  // DnD 用のローカル順序（楽観的更新 — 直接のトラックのみ）
+  const [localOwnTracks, setLocalOwnTracks] = useState<TrackWithSource[] | null>(null);
 
   const { data: playlists } = usePlaylistTree();
   const { data: tracks, isLoading, isError } = usePlaylistTracks(id);
   const { playPlaylist, currentTrack, sourcePlaylistId } = usePlayerStore();
   const { mutate: deletePlaylist, isPending: isDeleting } = useDeletePlaylist();
   const { mutate: reorderTracks } = useReorderTracks(id);
+  const { mutate: updatePlaylist } = useUpdatePlaylist();
 
-  // サーバーからデータが更新されたらローカル状態をリセット
+  const playlist = playlists ? findPlaylistById(playlists, id) : undefined;
+
+  // サーバーデータが更新されたらローカル状態をリセット
   useEffect(() => {
-    setLocalTracks(null);
+    setLocalOwnTracks(null);
   }, [tracks]);
 
-  const displayTracks = localTracks ?? tracks ?? [];
+  // ルートの直接トラック（DnD 対象）
+  const ownTracksFromServer = useMemo(
+    () => tracks?.filter((t) => t.playlistId === id) ?? [],
+    [tracks, id],
+  );
+  const ownTracks = localOwnTracks ?? ownTracksFromServer;
+
+  // 全トラックを playlistId でグループ化（子セクション描画用）
+  const tracksByPlaylist = useMemo(() => {
+    const map = new Map<string, TrackWithSource[]>();
+    for (const t of tracks ?? []) {
+      const arr = map.get(t.playlistId) ?? [];
+      arr.push(t);
+      map.set(t.playlistId, arr);
+    }
+    return map;
+  }, [tracks]);
 
   const { mutate: exportPlaylist, isPending: isExporting } = useMutation({
     mutationFn: async () => {
@@ -233,31 +407,25 @@ export function PlaylistDetailView({ id }: Props) {
     },
   });
 
-  const playlist = playlists ? findPlaylistById(playlists, id) : undefined;
-
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || displayTracks.length === 0) return;
+    if (!over || active.id === over.id || ownTracks.length === 0) return;
 
-    const oldIndex = displayTracks.findIndex((t) => t.id === String(active.id));
-    const newIndex = displayTracks.findIndex((t) => t.id === String(over.id));
+    const oldIndex = ownTracks.findIndex((t) => t.id === String(active.id));
+    const newIndex = ownTracks.findIndex((t) => t.id === String(over.id));
     if (oldIndex === -1 || newIndex === -1) return;
 
-    const newTracks = arrayMove(displayTracks, oldIndex, newIndex);
-    setLocalTracks(newTracks);
+    const newOwnTracks = arrayMove(ownTracks, oldIndex, newIndex);
+    setLocalOwnTracks(newOwnTracks);
 
-    // 直接所属するトラックの新しい ID 順をサーバーに送信
-    const newOwnTrackIds = newTracks
-      .filter((t) => t.playlistId === id)
-      .map((t) => t.id);
-
-    reorderTracks(newOwnTrackIds, {
-      onError: () => setLocalTracks(null), // エラー時は元の順序に戻す
-    });
+    reorderTracks(
+      newOwnTracks.map((t) => t.id),
+      { onError: () => setLocalOwnTracks(null) },
+    );
   };
 
   const handlePlay = async (includeChildren: boolean, shuffle: boolean) => {
@@ -276,6 +444,21 @@ export function PlaylistDetailView({ id }: Props) {
     });
   };
 
+  const handleRenameSubmit = () => {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== playlist?.name) {
+      updatePlaylist({ id, dto: { name: trimmed } });
+    }
+    setIsRenaming(false);
+  };
+
+  const startRenaming = () => {
+    setRenameValue(playlist?.name ?? "");
+    setIsRenaming(true);
+    // input は次の tick で DOM に現れるので setTimeout で focus
+    setTimeout(() => renameInputRef.current?.focus(), 0);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -291,6 +474,9 @@ export function PlaylistDetailView({ id }: Props) {
       </p>
     );
   }
+
+  const hasOwnTracks = ownTracks.length > 0;
+  const hasChildren = (playlist?.children ?? []).length > 0;
 
   return (
     <div className="space-y-6">
@@ -318,11 +504,39 @@ export function PlaylistDetailView({ id }: Props) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="font-[family-name:var(--font-syne)] text-2xl font-bold truncate">
-            {playlist?.name ?? "プレイリスト"}
-          </h1>
+          {/* プレイリスト名（クリックでインライン編集） */}
+          {isRenaming ? (
+            <input
+              ref={renameInputRef}
+              type="text"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onBlur={handleRenameSubmit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRenameSubmit();
+                if (e.key === "Escape") setIsRenaming(false);
+              }}
+              className="font-[family-name:var(--font-syne)] text-2xl font-bold bg-transparent border-b border-accent-purple/50 outline-none w-full text-foreground"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={startRenaming}
+              title="クリックして名前を変更"
+              className="group flex items-center gap-2 text-left w-full"
+            >
+              <h1 className="font-[family-name:var(--font-syne)] text-2xl font-bold truncate">
+                {playlist?.name ?? "プレイリスト"}
+              </h1>
+              <Pencil
+                size={14}
+                className="text-foreground/20 group-hover:text-foreground/50 transition-colors shrink-0"
+              />
+            </button>
+          )}
+
           <p className="text-foreground/50 text-sm mt-1 font-[family-name:var(--font-space-mono)]">
-            {tracks?.length ?? 0} 曲
+            {(tracks?.length ?? 0)} 曲
             {sourcePlaylistId === id && " · 再生中"}
           </p>
 
@@ -397,43 +611,61 @@ export function PlaylistDetailView({ id }: Props) {
         </div>
       </div>
 
-      {/* トラックリスト */}
-      {displayTracks.length > 0 ? (
+      {/* ─── トラックリスト ─── */}
+      {hasOwnTracks || hasChildren ? (
         <div>
-          <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 text-foreground/30 text-xs border-b border-white/5">
-            <span />
-            <span className="w-6 text-center">#</span>
-            <span>タイトル</span>
-            <span>アルバム</span>
-            <span>追加日</span>
-            <span className="flex items-center justify-end">
-              <Clock size={12} />
-            </span>
-          </div>
+          {/* 直接のトラック（ソータブル） */}
+          {hasOwnTracks && (
+            <div>
+              <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 text-foreground/30 text-xs border-b border-white/5 mb-1">
+                <span />
+                <span className="w-6 text-center">#</span>
+                <span>タイトル</span>
+                <span>アルバム</span>
+                <span>追加日</span>
+                <span className="flex items-center justify-end">
+                  <Clock size={12} />
+                </span>
+              </div>
 
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={displayTracks.map((t) => t.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <ul className="mt-1">
-                {displayTracks.map((t, i) => (
-                  <SortableTrackItem
-                    key={t.id}
-                    track={t}
-                    index={i}
-                    isOwn={t.playlistId === id}
-                    currentTrackId={currentTrack?.id}
-                    playlistName={playlist?.name}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={ownTracks.map((t) => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul>
+                    {ownTracks.map((t, i) => (
+                      <SortableTrackItem
+                        key={t.id}
+                        track={t}
+                        index={i}
+                        currentTrackId={currentTrack?.id}
+                      />
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
+            </div>
+          )}
+
+          {/* 子孫プレイリスト（ツリー形式） */}
+          {hasChildren && (
+            <div className={hasOwnTracks ? "mt-4 border-t border-white/5 pt-4" : ""}>
+              {(playlist?.children ?? []).map((child) => (
+                <ChildPlaylistSection
+                  key={child.id}
+                  playlist={child}
+                  tracksByPlaylist={tracksByPlaylist}
+                  depth={0}
+                  currentTrackId={currentTrack?.id}
+                />
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-12">
