@@ -3,7 +3,9 @@
 import { ChevronRight, ChevronDown, Music2, GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Playlist } from "@nestify/shared";
+import { api } from "@/lib/api";
 
 interface Props {
   playlist: Playlist;
@@ -27,6 +29,19 @@ export function PlaylistTreeNode({
   const hasChildren = (playlist.children?.length ?? 0) > 0;
   const isExpanded = expandedIds.has(playlist.id);
   const isSelected = selectedId === playlist.id;
+  const queryClient = useQueryClient();
+
+  const handleMouseEnter = () => {
+    queryClient.prefetchQuery({
+      queryKey: ["playlist-tracks", playlist.id],
+      queryFn: async () => {
+        const result = await api.playlists.tracks(playlist.id);
+        if (!result.ok) throw new Error(result.error);
+        return result.data;
+      },
+      staleTime: 60_000,
+    });
+  };
 
   const {
     attributes,
@@ -74,6 +89,7 @@ export function PlaylistTreeNode({
         ].join(" ")}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
         onClick={handleSelect}
+        onMouseEnter={handleMouseEnter}
       >
         {/* ドラッグハンドル */}
         <span

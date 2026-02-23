@@ -215,3 +215,6 @@
 - [x] Feature 1: クロスコンテナ曲移動（moveTrack API 呼び出し + 楽観的更新 + エラー時ロールバック）
 - [x] Feature 1: DragOverlay でドラッグ中の見た目を表示
 - [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認
+
+## PLツリーホバー時プリフェッチ（完了）
+- [x] PlaylistTreeNode: onMouseEnter で playlist-tracks をプリフェッチ（クリック前にフェッチ開始）
