@@ -84,6 +84,14 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify({ orderedIds }),
       }),
+    reorderItems: (
+      id: string,
+      items: Array<{ type: "track" | "playlist"; id: string }>,
+    ) =>
+      apiFetch<{ reordered: boolean }>(`/api/playlists/${id}/items/reorder`, {
+        method: "PATCH",
+        body: JSON.stringify({ items }),
+      }),
     addTrack: (id: string, spotifyTrackId: string) =>
       apiFetch<TrackWithSource>(`/api/playlists/${id}/tracks`, {
         method: "POST",

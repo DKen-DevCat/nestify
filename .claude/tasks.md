@@ -180,3 +180,4 @@
 - [x] api.ts: reorderItems メソッド追加
 - [x] usePlaylistMutations.ts: useReorderItems フック追加
 - [x] PlaylistDetailView.tsx: PlaylistLevelContent + SortablePlaylistSection で混在 DnD + 子 PL インライン名前変更
+- [x] tsc --noEmit で型エラーなし確認
