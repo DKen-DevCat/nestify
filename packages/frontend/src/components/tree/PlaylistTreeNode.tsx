@@ -55,7 +55,7 @@ export function PlaylistTreeNode({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.35 : 1,
   };
 
   const handleToggle = (e: React.MouseEvent) => {
@@ -76,18 +76,30 @@ export function PlaylistTreeNode({
     <li ref={setNodeRef} style={style} className="relative">
       {/* 前インジケーター（上端ドロップ） */}
       {dragOverZone === "before" && (
-        <div className="absolute top-0 left-2 right-2 h-0.5 bg-accent-purple rounded-full z-10 pointer-events-none" />
+        <div className="absolute top-0 left-2 right-2 h-[2px] rounded-full z-10 pointer-events-none"
+          style={{ background: "linear-gradient(90deg, #7c6af7, #f76a8a)" }}
+        />
       )}
 
       <div
         className={[
-          "group flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer transition-colors",
-          "hover:bg-white/5",
-          isSelected ? "bg-accent-purple/20" : "",
+          "group relative flex items-center gap-1 py-1.5 rounded-lg cursor-pointer",
+          "transition-all duration-150",
+          isSelected
+            ? "text-white"
+            : "hover:bg-white/[0.04] text-foreground/70 hover:text-foreground/90",
           isDragging ? "ring-1 ring-accent-purple/40" : "",
-          dragOverZone === "inside" ? "ring-1 ring-accent-purple/60 bg-accent-purple/10" : "",
+          dragOverZone === "inside" ? "ring-1 ring-accent-purple/50 bg-accent-purple/8" : "",
         ].join(" ")}
-        style={{ paddingLeft: `${depth * 12 + 8}px` }}
+        style={{
+          paddingLeft: `${depth * 12 + 8}px`,
+          paddingRight: "8px",
+          // 選択状態: 左アクセントバー + 微妙なグラデーション背景
+          ...(isSelected && {
+            background: "linear-gradient(90deg, rgba(124,106,247,0.15) 0%, rgba(124,106,247,0.05) 100%)",
+            boxShadow: "inset 2px 0 0 #7c6af7",
+          }),
+        }}
         onClick={handleSelect}
         onMouseEnter={handleMouseEnter}
       >
@@ -103,14 +115,17 @@ export function PlaylistTreeNode({
 
         {/* 展開アイコン */}
         <span
-          className="shrink-0 w-4 h-4 flex items-center justify-center text-foreground/40"
+          className={[
+            "shrink-0 w-4 h-4 flex items-center justify-center transition-colors",
+            isSelected ? "text-accent-purple/60" : "text-foreground/30",
+          ].join(" ")}
           onClick={handleToggle}
         >
           {hasChildren ? (
             isExpanded ? (
-              <ChevronDown size={14} />
+              <ChevronDown size={13} />
             ) : (
-              <ChevronRight size={14} />
+              <ChevronRight size={13} />
             )
           ) : (
             <span className="w-3.5" />
@@ -118,7 +133,7 @@ export function PlaylistTreeNode({
         </span>
 
         {/* アイコン: Spotify カバー画像があれば表示、なければ絵文字 */}
-        <span className="shrink-0 w-5 h-5 rounded overflow-hidden flex items-center justify-center text-sm leading-none">
+        <span className="shrink-0 w-5 h-5 rounded-md overflow-hidden flex items-center justify-center text-sm leading-none">
           {playlist.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -134,8 +149,8 @@ export function PlaylistTreeNode({
         {/* 名前 */}
         <span
           className={[
-            "truncate text-sm font-medium flex-1",
-            isSelected ? "text-accent-purple" : "text-foreground/80",
+            "truncate text-sm font-medium flex-1 transition-colors",
+            isSelected ? "text-accent-purple" : "",
           ].join(" ")}
         >
           {playlist.name}
@@ -143,8 +158,12 @@ export function PlaylistTreeNode({
 
         {/* トラック数 */}
         {playlist.trackCount !== undefined && playlist.trackCount > 0 && (
-          <span className="ml-auto shrink-0 flex items-center gap-0.5 text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
-            <Music2 size={10} />
+          <span
+            className={[
+              "ml-auto shrink-0 text-xs font-[family-name:var(--font-space-mono)] transition-colors",
+              isSelected ? "text-accent-purple/50" : "text-foreground/25",
+            ].join(" ")}
+          >
             {playlist.trackCount}
           </span>
         )}
@@ -152,12 +171,17 @@ export function PlaylistTreeNode({
 
       {/* 後インジケーター（下端ドロップ） */}
       {dragOverZone === "after" && (
-        <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-accent-purple rounded-full z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full z-10 pointer-events-none"
+          style={{ background: "linear-gradient(90deg, #7c6af7, #f76a8a)" }}
+        />
       )}
 
       {/* 子ノードの再帰レンダリング */}
       {hasChildren && isExpanded && (
-        <ul className="mt-0.5">
+        <ul
+          className="mt-0.5"
+          style={{ borderLeft: `1px solid rgba(124,106,247,0.12)`, marginLeft: `${depth * 12 + 20}px`, paddingLeft: "0" }}
+        >
           {playlist.children!.map((child) => (
             <PlaylistTreeNode
               key={child.id}

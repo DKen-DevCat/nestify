@@ -2,13 +2,17 @@
 
 /* Nestify: ダークテーマ固定 */
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #07070f;
+  --foreground: #e8e6f0;
 
   /* アクセントカラー */
   --color-accent-purple: #7c6af7;
   --color-accent-pink: #f76a8a;
   --color-accent-green: #6af7c8;
+
+  /* サーフェス */
+  --color-surface: #0e0d1a;
+  --color-surface-2: #131224;
 }
 
 @theme inline {
@@ -21,10 +25,158 @@
   --color-accent-purple: var(--color-accent-purple);
   --color-accent-pink: var(--color-accent-pink);
   --color-accent-green: var(--color-accent-green);
+  --color-surface: var(--color-surface);
+  --color-surface-2: var(--color-surface-2);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-syne), sans-serif;
+}
+
+/* 雰囲気ある背景グラデーション — 固定グロー */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 10% 5%, rgba(124, 106, 247, 0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 90% 95%, rgba(247, 106, 138, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 30% at 80% 20%, rgba(106, 247, 200, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* カスタムスクロールバー */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 106, 247, 0.25);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 106, 247, 0.45);
+}
+
+/* ─── Keyframes ─── */
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.08); }
+  66% { transform: translate(-15px, 12px) scale(0.95); }
+}
+
+@keyframes orb-drift-reverse {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-25px, 18px) scale(0.95); }
+  66% { transform: translate(20px, -12px) scale(1.06); }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ─── ユーティリティクラス ─── */
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-orb-drift {
+  animation: orb-drift 18s ease-in-out infinite;
+}
+
+.animate-orb-drift-reverse {
+  animation: orb-drift-reverse 22s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.25s ease-out forwards;
+}
+
+/* グラデーションテキスト */
+.text-gradient {
+  background: linear-gradient(135deg, #7c6af7, #f76a8a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-green {
+  background: linear-gradient(135deg, #6af7c8, #7c6af7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* シマーエフェクト（ボタン等） */
+.shimmer {
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 60%
+  ) var(--gradient-primary);
+  background-size: 200% auto;
+  animation: shimmer 2.5s linear infinite;
+}
+
+/* グラスモーフィズム */
+.glass {
+  background: rgba(14, 13, 26, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }

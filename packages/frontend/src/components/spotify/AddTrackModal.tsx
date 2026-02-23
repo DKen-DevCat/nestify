@@ -84,11 +84,16 @@ export function AddTrackModal({ playlistId, playlist, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="bg-[#141414] border border-white/10 rounded-2xl w-full max-w-lg mx-4 shadow-2xl flex flex-col max-h-[80vh]"
+        className="w-full max-w-lg mx-4 rounded-2xl flex flex-col max-h-[80vh] animate-fade-in-up"
+        style={{
+          background: "rgba(10, 9, 20, 0.98)",
+          border: "1px solid rgba(124,106,247,0.2)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
+        }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >

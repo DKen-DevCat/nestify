@@ -241,3 +241,13 @@
 - [x] routes/playlists.ts: addTrack の zValidator に trackMetadata フィールド追加
 - [x] api.ts: addTrack に trackMetadata 引数追加
 - [x] AddTrackModal.tsx: handleAdd がトラックのメタデータを addTrack に渡す
+
+## UI 最適化（完了）
+- [x] globals.css: 雰囲気ある背景グラデーション（ラジアルグロー）・カスタムスクロールバー・keyframes（float/orb-drift/fade-in-up等）
+- [x] globals.css: テキストグラデーション・グラスモーフィズム用ユーティリティクラス追加
+- [x] login/page.tsx: アニメーション背景オーブ（CSS animation）・ロゴグラデーション・シマーボタン
+- [x] PlaylistTreeNode.tsx: 選択状態に左アクセントバー + グラデーション背景、インジケーターをグラデーション化、子ノードの区切り線を accent-purple に
+- [x] PlaylistSidebar.tsx: ヘッダーに accent-purple グラデーション border-bottom + 微妙な背景グラデーション、空状態メッセージ追加
+- [x] PlaylistsLayoutClient.tsx: モバイルヘッダーのスタイルをサイドバーと統一、drawer にスライドインアニメーション
+- [x] PlaylistDetailView.tsx: カバーアートに box-shadow グロー、ActionButton コンポーネント分離、空状態をアイコン付きに、削除ダイアログのスタイル改善、トラック行のホバー・サムネイル微アニメーション
+- [x] CreatePlaylistModal / AddTrackModal / ImportPlaylistModal: モーダル背景・ボーダーカラーを accent-purple ベースに統一、fade-in-up アニメーション追加

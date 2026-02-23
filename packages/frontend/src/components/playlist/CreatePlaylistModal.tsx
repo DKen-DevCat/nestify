@@ -37,10 +37,17 @@ export function CreatePlaylistModal({ parentId = null, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className="bg-[#141414] border border-white/10 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+      <div
+        className="w-full max-w-sm mx-4 rounded-2xl p-6 animate-fade-in-up"
+        style={{
+          background: "rgba(10, 9, 20, 0.98)",
+          border: "1px solid rgba(124,106,247,0.2)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
+        }}
+      >
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-[family-name:var(--font-syne)] text-lg font-bold">

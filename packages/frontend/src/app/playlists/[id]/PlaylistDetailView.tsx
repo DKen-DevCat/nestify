@@ -160,7 +160,7 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.35 : 1,
     zIndex: isDragging ? 10 : undefined,
   };
 
@@ -168,7 +168,7 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
     <li
       ref={setNodeRef}
       style={style}
-      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-md items-center hover:bg-white/5 transition-colors cursor-pointer"
+      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 cursor-pointer hover:bg-white/[0.04]"
     >
       <span
         className="flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
@@ -176,15 +176,18 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
         {...listeners}
         onClick={(e) => e.stopPropagation()}
       >
-        <GripVertical size={13} />
+        <GripVertical size={12} />
       </span>
 
-      <span className="w-6 text-center text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+      <span className="w-6 text-center text-foreground/25 text-xs font-[family-name:var(--font-space-mono)] group-hover:text-foreground/40 transition-colors">
         {index + 1}
       </span>
 
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded shrink-0 overflow-hidden bg-white/5">
+        <div
+          className="w-9 h-9 rounded-md shrink-0 overflow-hidden bg-white/5 transition-transform duration-150 group-hover:scale-[1.05]"
+          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
+        >
           {track.track?.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -199,24 +202,24 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
           )}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate">
+          <p className="text-sm font-medium truncate text-foreground/90 group-hover:text-foreground transition-colors">
             {track.track?.name ?? track.spotifyTrackId}
           </p>
-          <p className="text-xs text-foreground/50 truncate">
+          <p className="text-xs text-foreground/40 truncate">
             {track.track?.artists.join(", ")}
           </p>
         </div>
       </div>
 
-      <span className="text-foreground/40 text-xs truncate">
+      <span className="text-foreground/35 text-xs truncate">
         {track.track?.album ?? "--"}
       </span>
 
-      <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+      <span className="text-foreground/25 text-xs font-[family-name:var(--font-space-mono)]">
         {formatDate(track.addedAt)}
       </span>
 
-      <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+      <span className="text-foreground/25 text-xs font-[family-name:var(--font-space-mono)]">
         {track.track ? formatDuration(track.track.durationMs) : "--:--"}
       </span>
     </li>
@@ -229,13 +232,20 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
 
 function DragOverlayTrackItem({ track }: { track: TrackWithSource }) {
   return (
-    <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-md items-center bg-[#1e1e1e] border border-accent-purple/30 shadow-xl opacity-90">
-      <span className="flex items-center justify-center text-foreground/40">
-        <GripVertical size={13} />
+    <div
+      className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center opacity-90"
+      style={{
+        background: "rgba(20, 18, 40, 0.95)",
+        border: "1px solid rgba(124,106,247,0.35)",
+        boxShadow: "0 8px 30px rgba(124,106,247,0.2), 0 4px 12px rgba(0,0,0,0.5)",
+      }}
+    >
+      <span className="flex items-center justify-center text-accent-purple/50">
+        <GripVertical size={12} />
       </span>
       <span className="w-6" />
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded shrink-0 overflow-hidden bg-white/5">
+        <div className="w-9 h-9 rounded-md shrink-0 overflow-hidden bg-white/5">
           {track.track?.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -275,13 +285,13 @@ function DragOverlayTrackItem({ track }: { track: TrackWithSource }) {
 
 function SimpleTrackItem({ track, index }: { track: TrackWithSource; index: number }) {
   return (
-    <li className="grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-md items-center hover:bg-white/5 transition-colors">
-      <span className="w-6 text-center text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+    <li className="group grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-lg items-center hover:bg-white/[0.04] transition-all duration-150">
+      <span className="w-6 text-center text-foreground/25 text-xs font-[family-name:var(--font-space-mono)] group-hover:text-foreground/40 transition-colors">
         {index + 1}
       </span>
 
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded shrink-0 overflow-hidden bg-white/5">
+        <div className="w-8 h-8 rounded-md shrink-0 overflow-hidden bg-white/5">
           {track.track?.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -296,20 +306,20 @@ function SimpleTrackItem({ track, index }: { track: TrackWithSource; index: numb
           )}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate">
+          <p className="text-sm font-medium truncate text-foreground/85 group-hover:text-foreground transition-colors">
             {track.track?.name ?? track.spotifyTrackId}
           </p>
-          <p className="text-xs text-foreground/50 truncate">
+          <p className="text-xs text-foreground/40 truncate">
             {track.track?.artists.join(", ")}
           </p>
         </div>
       </div>
 
-      <span className="text-foreground/40 text-xs truncate">
+      <span className="text-foreground/35 text-xs truncate">
         {track.track?.album ?? "--"}
       </span>
 
-      <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+      <span className="text-foreground/25 text-xs font-[family-name:var(--font-space-mono)]">
         {track.track ? formatDuration(track.track.durationMs) : "--:--"}
       </span>
     </li>
@@ -347,7 +357,7 @@ function SortablePlaylistSection({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.35 : 1,
   };
 
   const directChildren = playlist.children ?? [];
@@ -365,26 +375,29 @@ function SortablePlaylistSection({
     e.stopPropagation();
     setRenameValue(playlist.name);
     setIsRenaming(true);
-    setTimeout(() => renameInputRef.current?.focus(), 0);
+    setTimeout(() => {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    }, 0);
   };
 
   return (
     <li ref={setNodeRef} style={style} className="list-none">
-      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors mt-1">
+      <div className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-all duration-150 mt-1">
         <span
-          className="text-foreground/20 hover:text-foreground/40 cursor-grab active:cursor-grabbing shrink-0"
+          className="text-foreground/15 hover:text-foreground/35 cursor-grab active:cursor-grabbing shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
           {...attributes}
           {...listeners}
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical size={13} />
+          <GripVertical size={12} />
         </span>
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="text-foreground/40 shrink-0"
+          className="text-foreground/35 hover:text-foreground/60 shrink-0 transition-colors"
         >
-          {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
         </button>
         {playlist.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -411,24 +424,29 @@ function SortablePlaylistSection({
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
-          <span className="text-sm font-medium truncate flex-1">{playlist.name}</span>
+          <span className="text-sm font-medium truncate flex-1 text-foreground/80">{playlist.name}</span>
         )}
         {!isRenaming && (
           <button
             type="button"
             onClick={startRenaming}
-            className="text-foreground/20 hover:text-foreground/50 transition-colors shrink-0"
+            className="text-foreground/15 hover:text-foreground/40 transition-colors shrink-0 opacity-0 group-hover:opacity-100"
           >
-            <Pencil size={12} />
+            <Pencil size={11} />
           </button>
         )}
-        <span className="text-xs text-foreground/30 font-[family-name:var(--font-space-mono)] shrink-0">
-          {totalTracks}曲
-        </span>
+        {totalTracks > 0 && (
+          <span className="text-xs text-foreground/25 font-[family-name:var(--font-space-mono)] shrink-0">
+            {totalTracks}
+          </span>
+        )}
       </div>
 
       {expanded && (
-        <div className="border-l border-white/10 ml-3.5 pl-3 mt-1">
+        <div
+          className="ml-4 pl-3 mt-0.5"
+          style={{ borderLeft: "1px solid rgba(124,106,247,0.1)" }}
+        >
           <PlaylistLevelContent
             playlistId={playlist.id}
             directChildren={directChildren}
@@ -714,28 +732,34 @@ export function PlaylistDetailView({ id }: Props) {
   const startRenaming = () => {
     setRenameValue(playlist?.name ?? "");
     setIsRenaming(true);
-    setTimeout(() => renameInputRef.current?.focus(), 0);
+    setTimeout(() => {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    }, 0);
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="w-6 h-6 border-2 border-accent-purple border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center py-20">
+        <div className="w-6 h-6 border-2 border-accent-purple/60 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <p className="text-accent-pink text-sm py-8 text-center">
-        トラックの読み込みに失敗しました
-      </p>
+      <div className="text-center py-16">
+        <p className="text-accent-pink/70 text-sm">トラックの読み込みに失敗しました</p>
+      </div>
     );
   }
 
   const directChildren = playlist?.children ?? [];
   const hasContent =
     Object.values(displayContainerItems).some((items) => items.length > 0);
+
+  // カバーカラーからグロー色を抽出（グラデーションはそのまま使う）
+  const coverColor = playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)";
 
   return (
     <DetailDndCtx.Provider value={dndCtxValue}>
@@ -746,15 +770,17 @@ export function PlaylistDetailView({ id }: Props) {
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveTrack(null)}
       >
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
           {/* ヘッダー */}
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-5">
+            {/* カバーアート */}
             <div
-              className="w-20 h-20 rounded-xl shrink-0 overflow-hidden"
+              className="relative w-24 h-24 rounded-2xl shrink-0 overflow-hidden"
               style={{
-                background: playlist?.imageUrl
-                  ? undefined
-                  : (playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)"),
+                background: playlist?.imageUrl ? undefined : coverColor,
+                boxShadow: playlist?.imageUrl
+                  ? "0 8px 30px rgba(0,0,0,0.5)"
+                  : "0 8px 30px rgba(124,106,247,0.3), 0 0 0 1px rgba(255,255,255,0.08)",
               }}
             >
               {playlist?.imageUrl ? (
@@ -770,6 +796,7 @@ export function PlaylistDetailView({ id }: Props) {
                 </span>
               )}
             </div>
+
             <div className="min-w-0 flex-1">
               {/* プレイリスト名（クリックでインライン編集） */}
               {isRenaming ? (
@@ -792,79 +819,77 @@ export function PlaylistDetailView({ id }: Props) {
                   title="クリックして名前を変更"
                   className="group flex items-center gap-2 text-left w-full"
                 >
-                  <h1 className="font-[family-name:var(--font-syne)] text-2xl font-bold truncate">
+                  <h1 className="font-[family-name:var(--font-syne)] text-2xl font-bold truncate text-foreground/95">
                     {playlist?.name ?? "プレイリスト"}
                   </h1>
                   <Pencil
-                    size={14}
-                    className="text-foreground/20 group-hover:text-foreground/50 transition-colors shrink-0"
+                    size={13}
+                    className="text-foreground/15 group-hover:text-foreground/40 transition-colors shrink-0"
                   />
                 </button>
               )}
 
-              <p className="text-foreground/50 text-sm mt-1 font-[family-name:var(--font-space-mono)]">
+              <p className="text-foreground/35 text-xs mt-1 font-[family-name:var(--font-space-mono)] tracking-wide">
                 {tracks?.length ?? 0} 曲
               </p>
 
               {/* アクションボタン */}
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <button
-                  type="button"
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                <ActionButton
+                  icon={<Plus size={14} />}
+                  label="サブPL"
                   onClick={() => setIsAddingChild(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
-                >
-                  <Plus size={16} />
-                  サブPL
-                </button>
-                <button
-                  type="button"
+                />
+                <ActionButton
+                  icon={<ListPlus size={14} />}
+                  label="曲を追加"
                   onClick={() => setIsAddingTrack(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
-                >
-                  <ListPlus size={16} />
-                  曲を追加
-                </button>
-                {/* 書き出しボタン */}
-                <button
-                  type="button"
+                />
+                <ActionButton
+                  icon={
+                    isExporting ? (
+                      <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Upload size={14} />
+                    )
+                  }
+                  label="Spotify へ書き出し"
                   onClick={() => exportPlaylist()}
                   disabled={isExporting}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors disabled:opacity-40"
-                >
-                  {isExporting ? (
-                    <div className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Upload size={16} />
-                  )}
-                  Spotify へ書き出し
-                </button>
-                {/* Spotify で開くボタン（書き出し完了後に活性化） */}
+                />
+                {/* Spotify で開くボタン */}
                 {exportedUrls[id] ? (
                   <a
                     href={exportedUrls[id].url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-accent-green/30 text-accent-green text-sm hover:bg-accent-green/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 hover:scale-[1.02]"
+                    style={{
+                      border: "1px solid rgba(106,247,200,0.3)",
+                      color: "#6af7c8",
+                      background: "rgba(106,247,200,0.06)",
+                    }}
                   >
-                    <ExternalLink size={14} />
+                    <ExternalLink size={13} />
                     Spotify で開く
                   </a>
                 ) : (
                   <button
                     type="button"
                     disabled
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-white/10 text-foreground/20 text-sm cursor-not-allowed"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-white/8 text-foreground/20 cursor-not-allowed"
                   >
-                    <ExternalLink size={14} />
+                    <ExternalLink size={13} />
                     Spotify で開く
                   </button>
                 )}
+
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full text-foreground/30 text-sm hover:text-accent-pink hover:bg-accent-pink/10 transition-colors ml-auto"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs text-foreground/25 hover:text-accent-pink hover:bg-accent-pink/8 transition-all ml-auto"
                 >
-                  <Trash2 size={15} />
+                  <Trash2 size={13} />
                 </button>
               </div>
             </div>
@@ -875,14 +900,24 @@ export function PlaylistDetailView({ id }: Props) {
             <div>
               {/* カラムヘッダー（直接トラックがある場合のみ表示） */}
               {(displayContainerItems[id] ?? []).some((m) => m.kind === "track") && (
-                <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 text-foreground/30 text-xs border-b border-white/5 mb-1">
+                <div
+                  className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 text-xs mb-1"
+                  style={{
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    color: "rgba(232,230,240,0.25)",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    fontFamily: "var(--font-space-mono)",
+                    fontSize: "10px",
+                  }}
+                >
                   <span />
                   <span className="w-6 text-center">#</span>
                   <span>タイトル</span>
                   <span>アルバム</span>
                   <span>追加日</span>
                   <span className="flex items-center justify-end">
-                    <Clock size={12} />
+                    <Clock size={11} />
                   </span>
                 </div>
               )}
@@ -893,11 +928,24 @@ export function PlaylistDetailView({ id }: Props) {
               />
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-foreground/30 text-sm">曲がありません</p>
-              <p className="text-foreground/20 text-xs mt-1">
-                Spotify から曲を追加してください
-              </p>
+            <div className="text-center py-16">
+              <div className="inline-flex flex-col items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  style={{
+                    background: "rgba(124,106,247,0.08)",
+                    border: "1px solid rgba(124,106,247,0.15)",
+                  }}
+                >
+                  <Music2 size={20} className="text-accent-purple/40" />
+                </div>
+                <div>
+                  <p className="text-foreground/30 text-sm">曲がありません</p>
+                  <p className="text-foreground/18 text-xs mt-1">
+                    「曲を追加」から Spotify の楽曲を追加できます
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -921,24 +969,30 @@ export function PlaylistDetailView({ id }: Props) {
           {/* 削除確認ダイアログ */}
           {confirmDelete && (
             <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
               onClick={() => setConfirmDelete(false)}
             >
               <div
-                className="bg-[#141414] border border-white/10 rounded-2xl p-6 w-full max-w-xs mx-4 shadow-2xl"
+                className="w-full max-w-xs mx-4 rounded-2xl p-6 shadow-2xl animate-fade-in-up"
+                style={{
+                  background: "rgba(12, 11, 22, 0.98)",
+                  border: "1px solid rgba(247,106,138,0.2)",
+                  boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="font-[family-name:var(--font-syne)] text-base font-bold mb-2">
+                <h2 className="font-[family-name:var(--font-syne)] text-base font-bold mb-2 text-foreground">
                   プレイリストを削除
                 </h2>
-                <p className="text-foreground/50 text-sm mb-5">
-                  「{playlist?.name}」を削除します。子プレイリストも含めて削除されます。
+                <p className="text-foreground/45 text-sm mb-5 leading-relaxed">
+                  「{playlist?.name}」を削除します。<br />
+                  子プレイリストも含めて削除されます。
                 </p>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(false)}
-                    className="flex-1 py-2 rounded-lg border border-white/10 text-sm text-foreground/60 hover:bg-white/5"
+                    className="flex-1 py-2 rounded-xl border border-white/10 text-sm text-foreground/50 hover:bg-white/5 transition-colors"
                   >
                     キャンセル
                   </button>
@@ -946,9 +1000,14 @@ export function PlaylistDetailView({ id }: Props) {
                     type="button"
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="flex-1 py-2 rounded-lg bg-accent-pink/20 text-accent-pink text-sm font-medium hover:bg-accent-pink/30 disabled:opacity-40 transition-colors"
+                    className="flex-1 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-40"
+                    style={{
+                      background: "rgba(247,106,138,0.15)",
+                      color: "#f76a8a",
+                      border: "1px solid rgba(247,106,138,0.25)",
+                    }}
                   >
-                    削除
+                    {isDeleting ? "削除中..." : "削除"}
                   </button>
                 </div>
               </div>
@@ -962,5 +1021,35 @@ export function PlaylistDetailView({ id }: Props) {
         </DragOverlay>
       </DndContext>
     </DetailDndCtx.Provider>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ActionButton コンポーネント
+// ---------------------------------------------------------------------------
+
+interface ActionButtonProps {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+function ActionButton({ icon, label, onClick, disabled }: ActionButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+      style={{
+        border: "1px solid rgba(255,255,255,0.12)",
+        color: "rgba(232,230,240,0.7)",
+        background: "rgba(255,255,255,0.03)",
+      }}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }

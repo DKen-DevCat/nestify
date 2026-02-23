@@ -54,8 +54,15 @@ export function ImportPlaylistModal({ parentId = null, onClose }: Props) {
       : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#1a1a2e] border border-white/10 rounded-xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div
+        className="w-full max-w-lg mx-4 flex flex-col max-h-[80vh] rounded-xl animate-fade-in-up"
+        style={{
+          background: "rgba(10, 9, 20, 0.98)",
+          border: "1px solid rgba(124,106,247,0.2)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
+        }}
+      >
         {/* ヘッダー */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-2">
