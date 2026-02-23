@@ -218,3 +218,15 @@
 
 ## PLツリーホバー時プリフェッチ（完了）
 - [x] PlaylistTreeNode: onMouseEnter で playlist-tracks をプリフェッチ（クリック前にフェッチ開始）
+
+## トラックメタデータ DB キャッシュ（完了）
+- [x] DB スキーマ: playlist_tracks に 7 カラム追加（track_name/artists/album/duration/preview/image/cached_at）
+- [x] migration 0002_track_metadata_cache.sql 作成
+- [x] _journal.json にエントリ追加
+- [x] playlistService.ts: addTrack に trackMetadata 引数追加（INSERT 時にキャッシュ保存）
+- [x] playlistService.ts: getTracksRecursive の TrackRow 型拡張 + buildOrdered でキャッシュから track 構築
+- [x] playlistService.ts: mock モードで MOCK_TRACKS の track フィールドをキャッシュカラムとして展開
+- [x] spotifyService.ts: enrichTracksWithSpotifyData が未キャッシュのみ Spotify API 呼び出し + fire-and-forget DB 保存
+- [x] routes/playlists.ts: addTrack の zValidator に trackMetadata フィールド追加
+- [x] api.ts: addTrack に trackMetadata 引数追加
+- [x] AddTrackModal.tsx: handleAdd がトラックのメタデータを addTrack に渡す

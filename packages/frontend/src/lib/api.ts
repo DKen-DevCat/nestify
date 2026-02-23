@@ -92,10 +92,17 @@ export const api = {
         method: "PATCH",
         body: JSON.stringify({ items }),
       }),
-    addTrack: (id: string, spotifyTrackId: string) =>
+    addTrack: (
+      id: string,
+      spotifyTrackId: string,
+      trackMetadata?: import("@nestify/shared").SpotifyTrack,
+    ) =>
       apiFetch<TrackWithSource>(`/api/playlists/${id}/tracks`, {
         method: "POST",
-        body: JSON.stringify({ spotifyTrackId }),
+        body: JSON.stringify({
+          spotifyTrackId,
+          ...(trackMetadata && { trackMetadata }),
+        }),
       }),
     moveTrack: (
       playlistId: string,

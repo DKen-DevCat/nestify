@@ -416,6 +416,7 @@ export async function addTrack(
   playlistId: string,
   spotifyTrackId: string,
   userId: string,
+  trackMetadata?: SpotifyTrack,
 ): Promise<Result<TrackWithSource>> {
   if (isMockMode) {
     const playlist = findFlatById(playlistId);
@@ -423,15 +424,19 @@ export async function addTrack(
       return { ok: false, error: "Playlist not found", status: 404 };
     }
     const maxOrder = MOCK_TRACKS.filter((t) => t.playlistId === playlistId).length;
-    const newTrack: TrackWithSource = {
+    const newTrackData = {
       id: randomUUID(),
       playlistId,
       spotifyTrackId,
       order: maxOrder,
       addedAt: new Date().toISOString(),
+      track: trackMetadata,
+    };
+    MOCK_TRACKS.push(newTrackData as unknown as typeof MOCK_TRACKS[number]);
+    const newTrack: TrackWithSource = {
+      ...newTrackData,
       sourcePlaylistName: playlist.name,
     };
-    MOCK_TRACKS.push(newTrack as unknown as typeof MOCK_TRACKS[number]);
     return { ok: true, data: newTrack };
   }
 
@@ -462,6 +467,15 @@ export async function addTrack(
       playlistId,
       spotifyTrackId,
       order: nextOrder,
+      ...(trackMetadata && {
+        trackName: trackMetadata.name,
+        trackArtists: JSON.stringify(trackMetadata.artists),
+        albumName: trackMetadata.album,
+        durationMs: trackMetadata.durationMs,
+        previewUrl: trackMetadata.previewUrl,
+        trackImageUrl: trackMetadata.imageUrl,
+        metadataCachedAt: new Date(),
+      }),
     })
     .returning();
 
@@ -475,6 +489,7 @@ export async function addTrack(
       order: row.order,
       addedAt: row.addedAt?.toISOString() ?? new Date().toISOString(),
       sourcePlaylistName: ownerCheck[0].name,
+      track: trackMetadata,
     },
   };
 }
@@ -539,6 +554,13 @@ export async function getTracksRecursive(
     order: number;
     addedAt: Date | string;
     sourcePlaylistName: string;
+    // キャッシュカラム
+    trackName: string | null;
+    trackArtists: string | null; // JSON 文字列
+    albumName: string | null;
+    durationMs: number | null;
+    previewUrl: string | null;
+    trackImageUrl: string | null;
   };
 
   // DFS を行うヘルパー（DB / mock 共通）
@@ -575,6 +597,18 @@ export async function getTracksRecursive(
                   ? t.addedAt.toISOString()
                   : String(t.addedAt),
               sourcePlaylistName: t.sourcePlaylistName,
+              track: t.trackName ? {
+                id: t.spotifyTrackId,
+                name: t.trackName,
+                artists: (() => {
+                  try { return JSON.parse(t.trackArtists ?? "[]") as string[]; }
+                  catch { return []; }
+                })(),
+                album: t.albumName ?? "",
+                durationMs: t.durationMs ?? 0,
+                previewUrl: t.previewUrl ?? null,
+                imageUrl: t.trackImageUrl ?? null,
+              } : undefined,
             });
           } else {
             dfs(item.data.id);
@@ -616,6 +650,12 @@ export async function getTracksRecursive(
           order: t.order,
           addedAt: t.addedAt,
           sourcePlaylistName: findFlatById(t.playlistId)?.name ?? "",
+          trackName: t.track?.name ?? null,
+          trackArtists: t.track ? JSON.stringify(t.track.artists) : null,
+          albumName: t.track?.album ?? null,
+          durationMs: t.track?.durationMs ?? null,
+          previewUrl: t.track?.previewUrl ?? null,
+          trackImageUrl: t.track?.imageUrl ?? null,
         })),
       );
     }
@@ -660,7 +700,13 @@ export async function getTracksRecursive(
       pt.spotify_track_id AS "spotifyTrackId",
       pt."order",
       pt.added_at AS "addedAt",
-      p.name AS "sourcePlaylistName"
+      p.name AS "sourcePlaylistName",
+      pt.track_name AS "trackName",
+      pt.track_artists AS "trackArtists",
+      pt.album_name AS "albumName",
+      pt.duration_ms AS "durationMs",
+      pt.preview_url AS "previewUrl",
+      pt.track_image_url AS "trackImageUrl"
     FROM playlist_tracks pt
     JOIN playlists p ON p.id = pt.playlist_id
     WHERE pt.playlist_id IN (SELECT id FROM descendants)

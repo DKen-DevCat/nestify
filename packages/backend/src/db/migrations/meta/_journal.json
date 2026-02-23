@@ -15,6 +15,13 @@
       "when": 1740182400000,
       "tag": "0001_playlist_enhancements",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1740441600000,
+      "tag": "0002_track_metadata_cache",
+      "breakpoints": true
     }
   ]
 }

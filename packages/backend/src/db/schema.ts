@@ -41,6 +41,14 @@ export const playlistTracks = pgTable("playlist_tracks", {
   spotifyTrackId: text("spotify_track_id").notNull(),
   order: integer("order").notNull().default(0),
   addedAt: timestamp("added_at").defaultNow(),
+  // --- メタデータキャッシュカラム (nullable: 未取得は null) ---
+  trackName: text("track_name"),
+  trackArtists: text("track_artists"), // JSON 配列文字列: '["Artist1","Artist2"]'
+  albumName: text("album_name"),
+  durationMs: integer("duration_ms"),
+  previewUrl: text("preview_url"),
+  trackImageUrl: text("track_image_url"),
+  metadataCachedAt: timestamp("metadata_cached_at"),
 });
 
 // Spotify OAuth PKCE フロー用の一時状態ストア

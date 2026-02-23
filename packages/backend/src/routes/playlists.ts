@@ -127,12 +127,38 @@ playlistRoutes.patch("/:id", zValidator("json", updateSchema), async (c) => {
 
 playlistRoutes.post(
   "/:id/tracks",
-  zValidator("json", z.object({ spotifyTrackId: z.string().min(1) })),
+  zValidator(
+    "json",
+    z.object({
+      spotifyTrackId: z.string().min(1),
+      trackMetadata: z
+        .object({
+          name: z.string(),
+          artists: z.array(z.string()),
+          album: z.string(),
+          durationMs: z.number(),
+          previewUrl: z.string().nullable(),
+          imageUrl: z.string().nullable(),
+        })
+        .optional(),
+    }),
+  ),
   async (c) => {
     const userId = c.get("userId");
     const id = c.req.param("id");
-    const { spotifyTrackId } = c.req.valid("json");
-    const result = await addTrack(id, spotifyTrackId, userId);
+    const { spotifyTrackId, trackMetadata } = c.req.valid("json");
+    const meta = trackMetadata
+      ? {
+          id: spotifyTrackId,
+          name: trackMetadata.name,
+          artists: trackMetadata.artists,
+          album: trackMetadata.album,
+          durationMs: trackMetadata.durationMs,
+          previewUrl: trackMetadata.previewUrl,
+          imageUrl: trackMetadata.imageUrl,
+        }
+      : undefined;
+    const result = await addTrack(id, spotifyTrackId, userId, meta);
     if (!result.ok) {
       return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
     }

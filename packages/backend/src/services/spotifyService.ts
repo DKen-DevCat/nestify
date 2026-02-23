@@ -225,11 +225,15 @@ export async function enrichTracksWithSpotifyData(
 ): Promise<TrackWithSource[]> {
   if (tracks.length === 0) return tracks;
 
+  // キャッシュ済みのトラックをスキップ
+  const uncached = tracks.filter((t) => !t.track);
+  if (uncached.length === 0) return tracks; // 全キャッシュ済みなら即リターン
+
   const tokenResult = await getValidAccessToken(userId);
   if (!tokenResult.ok) return tracks; // トークン取得失敗時はメタデータなしで返す
 
   const token = tokenResult.data;
-  const ids = [...new Set(tracks.map((t) => t.spotifyTrackId))];
+  const ids = [...new Set(uncached.map((t) => t.spotifyTrackId))];
 
   const metaMap = new Map<string, SpotifyTrack>();
 
@@ -266,9 +270,33 @@ export async function enrichTracksWithSpotifyData(
     }
   }
 
+  // DB に非同期でキャッシュ保存（レスポンスをブロックしない）
+  if (!isMockMode && db) {
+    Promise.all(
+      uncached.map((t) => {
+        const meta = metaMap.get(t.spotifyTrackId);
+        if (!meta) return Promise.resolve();
+        return db!
+          .update(playlistTracks)
+          .set({
+            trackName: meta.name,
+            trackArtists: JSON.stringify(meta.artists),
+            albumName: meta.album,
+            durationMs: meta.durationMs,
+            previewUrl: meta.previewUrl,
+            trackImageUrl: meta.imageUrl,
+            metadataCachedAt: new Date(),
+          })
+          .where(eq(playlistTracks.id, t.id));
+      }),
+    ).catch(() => {
+      /* キャッシュ失敗は無視 */
+    });
+  }
+
   return tracks.map((t) => ({
     ...t,
-    track: metaMap.get(t.spotifyTrackId),
+    track: t.track ?? metaMap.get(t.spotifyTrackId),
   }));
 }
 

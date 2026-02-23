@@ -70,7 +70,7 @@ export function AddTrackModal({ playlistId, playlist, onClose }: Props) {
   const handleAdd = async (track: SpotifyTrack) => {
     if (addedIds.has(track.id) || isAdding) return;
     setIsAdding(true);
-    const res = await api.playlists.addTrack(targetPlaylistId, track.id);
+    const res = await api.playlists.addTrack(targetPlaylistId, track.id, track);
     setIsAdding(false);
     if (res.ok) {
       setAddedIds((prev) => new Set(prev).add(track.id));
