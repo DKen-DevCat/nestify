@@ -181,3 +181,11 @@
 - [x] usePlaylistMutations.ts: useReorderItems フック追加
 - [x] PlaylistDetailView.tsx: PlaylistLevelContent + SortablePlaylistSection で混在 DnD + 子 PL インライン名前変更
 - [x] tsc --noEmit で型エラーなし確認
+
+## レスポンシブ対応 / サイドバー開閉・リサイズ / 曲順同期バグ修正（完了）
+- [x] playlistService.ts: getTracksRecursive を DFS traversal に変更（ORDER BY pt.order のみ依存 → childrenByParent + tracksMap で正確な順序を再現）
+- [x] hooks/useSidebar.ts: 新規作成（開閉状態・幅の localStorage 永続化、ドラッグリサイズ、SSR 安全）
+- [x] PlaylistSidebar.tsx: useSidebar 統合・ChevronLeft/Right 開閉ボタン・ドラッグハンドル・onNavigate prop・モーダルを aside 外に移動
+- [x] PlaylistsLayoutClient.tsx: 新規作成（モバイル overlay drawer + ハンバーガーヘッダー管理）
+- [x] layout.tsx: PlaylistsLayoutClient に委譲（Server Component 維持）
+- [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認

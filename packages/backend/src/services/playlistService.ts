@@ -479,31 +479,102 @@ export async function addTrack(
   };
 }
 
-/** 子孫を含む全トラック取得（再帰 CTE） */
+/** 子孫を含む全トラック取得（DFS traversal — 混在並び替え順を正確に再現） */
 export async function getTracksRecursive(
   id: string,
   userId: string,
 ): Promise<Result<TrackWithSource[]>> {
-  if (isMockMode) {
-    const descendantIds = collectDescendantIds(id);
-    const tracks: TrackWithSource[] = [];
+  // ローカル型定義（SQL raw 結果のマッピング用）
+  type PlaylistRow = { id: string; parentId: string | null; order: number; name: string };
+  type TrackRow = {
+    id: string;
+    playlistId: string;
+    spotifyTrackId: string;
+    order: number;
+    addedAt: Date | string;
+    sourcePlaylistName: string;
+  };
 
-    for (const pid of descendantIds) {
-      const playlist = findFlatById(pid);
-      const playlistTracks = MOCK_TRACKS.filter((t) => t.playlistId === pid);
-      for (const t of playlistTracks) {
-        tracks.push({
+  // DFS を行うヘルパー（DB / mock 共通）
+  const buildOrdered = (
+    childrenMap: Map<string, PlaylistRow[]>,
+    tracksMap: Map<string, TrackRow[]>,
+    rootId: string,
+  ): TrackWithSource[] => {
+    const ordered: TrackWithSource[] = [];
+
+    const dfs = (playlistId: string): void => {
+      const children = (childrenMap.get(playlistId) ?? []).map((p) => ({
+        kind: "playlist" as const,
+        order: p.order,
+        data: p,
+      }));
+      const tracks = (tracksMap.get(playlistId) ?? []).map((t) => ({
+        kind: "track" as const,
+        order: t.order,
+        data: t,
+      }));
+      [...children, ...tracks]
+        .sort((a, b) => a.order - b.order)
+        .forEach((item) => {
+          if (item.kind === "track") {
+            const t = item.data;
+            ordered.push({
+              id: t.id,
+              playlistId: t.playlistId,
+              spotifyTrackId: t.spotifyTrackId,
+              order: t.order,
+              addedAt:
+                t.addedAt instanceof Date
+                  ? t.addedAt.toISOString()
+                  : String(t.addedAt),
+              sourcePlaylistName: t.sourcePlaylistName,
+            });
+          } else {
+            dfs(item.data.id);
+          }
+        });
+    };
+
+    dfs(rootId);
+    return ordered;
+  };
+
+  if (isMockMode) {
+    const rootPlaylist = findFlatById(id);
+    if (!rootPlaylist) {
+      return { ok: false, error: "Playlist not found", status: 404 };
+    }
+
+    // 子孫ID一覧を収集し、children / tracks マップを構築
+    const allIds = collectDescendantIds(id);
+    const childrenMap = new Map<string, PlaylistRow[]>();
+    const tracksMap = new Map<string, TrackRow[]>();
+
+    for (const pid of allIds) {
+      childrenMap.set(
+        pid,
+        MOCK_PLAYLISTS_FLAT.filter((p) => p.parentId === pid).map((p) => ({
+          id: p.id,
+          parentId: p.parentId,
+          order: p.order,
+          name: p.name,
+        })),
+      );
+      tracksMap.set(
+        pid,
+        MOCK_TRACKS.filter((t) => t.playlistId === pid).map((t) => ({
           id: t.id,
           playlistId: t.playlistId,
           spotifyTrackId: t.spotifyTrackId,
           order: t.order,
           addedAt: t.addedAt,
-          sourcePlaylistName: playlist?.name ?? "",
-        });
-      }
+          sourcePlaylistName: findFlatById(t.playlistId)?.name ?? "",
+        })),
+      );
     }
 
-    return { ok: true, data: tracks };
+    return { ok: true, data: buildOrdered(childrenMap, tracksMap, id) };
   }
 
   if (!db) return { ok: false, error: "DB not initialized", status: 500 };
@@ -518,24 +589,54 @@ export async function getTracksRecursive(
     return { ok: false, error: "Playlist not found", status: 404 };
   }
 
-  const result = (await db.execute(sql`
+  // Step 1: 全子孫プレイリストを構造ごと取得（parentId, order 付き）
+  const descendantsResult = (await db.execute(sql`
     WITH RECURSIVE descendants AS (
-      SELECT id, name FROM playlists WHERE id = ${id}
+      SELECT id, parent_id AS "parentId", "order", name
+      FROM playlists WHERE id = ${id}
       UNION ALL
-      SELECT p.id, p.name FROM playlists p
-      INNER JOIN descendants d ON p.parent_id = d.id
+      SELECT p.id, p.parent_id, p."order", p.name
+      FROM playlists p INNER JOIN descendants d ON p.parent_id = d.id
+    )
+    SELECT * FROM descendants
+  `)) as unknown as PlaylistRow[];
+
+  // Step 2: 全子孫のトラックを取得（ORDER BY なし — DFS で順序を決める）
+  const tracksResult = (await db.execute(sql`
+    WITH RECURSIVE descendants AS (
+      SELECT id FROM playlists WHERE id = ${id}
+      UNION ALL
+      SELECT p.id FROM playlists p INNER JOIN descendants d ON p.parent_id = d.id
     )
     SELECT
       pt.id,
       pt.playlist_id AS "playlistId",
       pt.spotify_track_id AS "spotifyTrackId",
-      pt.order,
+      pt."order",
       pt.added_at AS "addedAt",
-      d.name AS "sourcePlaylistName"
+      p.name AS "sourcePlaylistName"
     FROM playlist_tracks pt
-    JOIN descendants d ON d.id = pt.playlist_id
-    ORDER BY pt.order
-  `)) as unknown as TrackWithSource[];
+    JOIN playlists p ON p.id = pt.playlist_id
+    WHERE pt.playlist_id IN (SELECT id FROM descendants)
+  `)) as unknown as TrackRow[];
 
-  return { ok: true, data: result };
+  // Step 3: childrenByParent / tracksMap を構築して DFS traversal
+  const childrenByParent = new Map<string, PlaylistRow[]>();
+  const tracksMap = new Map<string, TrackRow[]>();
+
+  for (const pl of descendantsResult) {
+    if (pl.parentId !== null) {
+      const arr = childrenByParent.get(pl.parentId) ?? [];
+      arr.push(pl);
+      childrenByParent.set(pl.parentId, arr);
+    }
+  }
+
+  for (const t of tracksResult) {
+    const arr = tracksMap.get(t.playlistId) ?? [];
+    arr.push(t);
+    tracksMap.set(t.playlistId, arr);
+  }
+
+  return { ok: true, data: buildOrdered(childrenByParent, tracksMap, id) };
 }
