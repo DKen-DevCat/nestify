@@ -16,7 +16,7 @@ interface SpotifySimplifiedPlaylist {
   name: string;
   description: string | null;
   images: { url: string }[];
-  tracks: { total: number };
+  tracks?: { total: number } | null;
 }
 
 interface SpotifyPaginated<T> {
@@ -395,8 +395,8 @@ export async function importSpotifyPlaylist(
 
       const tracksPage = (await tracksRes.json()) as SpotifyPaginated<SpotifyTrackItem>;
 
-      const values = tracksPage.items
-        .filter((item) => item.track !== null)
+      const values = (tracksPage.items ?? [])
+        .filter((item) => item?.track != null)
         .map((item) => ({
           playlistId: newPlaylist.id,
           spotifyTrackId: item.track!.id,

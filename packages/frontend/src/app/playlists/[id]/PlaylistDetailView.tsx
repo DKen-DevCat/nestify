@@ -29,8 +29,6 @@ import {
 import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  Play,
-  Shuffle,
   Music2,
   Clock,
   Plus,
@@ -45,7 +43,6 @@ import {
 } from "lucide-react";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
-import { usePlayerStore } from "@/stores/playerStore";
 import {
   useDeletePlaylist,
   useUpdatePlaylist,
@@ -53,7 +50,7 @@ import {
 import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
 import { AddTrackModal } from "@/components/spotify/AddTrackModal";
 import { api } from "@/lib/api";
-import type { Playlist, SpotifyTrack } from "@nestify/shared";
+import type { Playlist } from "@nestify/shared";
 import type { TrackWithSource } from "@/lib/api";
 
 interface Props {
@@ -142,20 +139,15 @@ const DetailDndCtx = createContext<DetailDndCtxValue>({
 });
 
 // ---------------------------------------------------------------------------
-// ソータブルなトラック行（直接追加のトラック用）
+// ソータブルなトラック行
 // ---------------------------------------------------------------------------
 
 interface SortableTrackItemProps {
   track: TrackWithSource;
   index: number;
-  currentTrackId: string | undefined;
 }
 
-function SortableTrackItem({
-  track,
-  index,
-  currentTrackId,
-}: SortableTrackItemProps) {
+function SortableTrackItem({ track, index }: SortableTrackItemProps) {
   const {
     attributes,
     listeners,
@@ -172,17 +164,11 @@ function SortableTrackItem({
     zIndex: isDragging ? 10 : undefined,
   };
 
-  const isCurrentTrack = currentTrackId === track.track?.id;
-
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={[
-        "group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-md items-center",
-        "hover:bg-white/5 transition-colors cursor-pointer",
-        isCurrentTrack ? "text-accent-purple" : "",
-      ].join(" ")}
+      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-md items-center hover:bg-white/5 transition-colors cursor-pointer"
     >
       <span
         className="flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
@@ -194,11 +180,7 @@ function SortableTrackItem({
       </span>
 
       <span className="w-6 text-center text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
-        {isCurrentTrack ? (
-          <Music2 size={12} className="text-accent-purple mx-auto" />
-        ) : (
-          index + 1
-        )}
+        {index + 1}
       </span>
 
       <div className="flex items-center gap-3 min-w-0">
@@ -291,33 +273,11 @@ function DragOverlayTrackItem({ track }: { track: TrackWithSource }) {
 // 非ソータブルなトラック行（子プレイリスト内のトラック用）
 // ---------------------------------------------------------------------------
 
-interface SimpleTrackItemProps {
-  track: TrackWithSource;
-  index: number;
-  currentTrackId: string | undefined;
-}
-
-function SimpleTrackItem({
-  track,
-  index,
-  currentTrackId,
-}: SimpleTrackItemProps) {
-  const isCurrentTrack = currentTrackId === track.track?.id;
-
+function SimpleTrackItem({ track, index }: { track: TrackWithSource; index: number }) {
   return (
-    <li
-      className={[
-        "grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-md items-center",
-        "hover:bg-white/5 transition-colors",
-        isCurrentTrack ? "text-accent-purple" : "",
-      ].join(" ")}
-    >
+    <li className="grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-md items-center hover:bg-white/5 transition-colors">
       <span className="w-6 text-center text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
-        {isCurrentTrack ? (
-          <Music2 size={12} className="text-accent-purple mx-auto" />
-        ) : (
-          index + 1
-        )}
+        {index + 1}
       </span>
 
       <div className="flex items-center gap-3 min-w-0">
@@ -363,13 +323,11 @@ function SimpleTrackItem({
 interface SortablePlaylistSectionProps {
   playlist: Playlist;
   tracksByPlaylist: Map<string, TrackWithSource[]>;
-  currentTrackId: string | undefined;
 }
 
 function SortablePlaylistSection({
   playlist,
   tracksByPlaylist,
-  currentTrackId,
 }: SortablePlaylistSectionProps) {
   const [expanded, setExpanded] = useState(true);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -392,7 +350,6 @@ function SortablePlaylistSection({
     opacity: isDragging ? 0.4 : 1,
   };
 
-  const directTracks = tracksByPlaylist.get(playlist.id) ?? [];
   const directChildren = playlist.children ?? [];
   const totalTracks = countTracksInPlaylist(playlist, tracksByPlaylist);
 
@@ -470,13 +427,12 @@ function SortablePlaylistSection({
         </span>
       </div>
 
-      {expanded && (directTracks.length > 0 || directChildren.length > 0) && (
+      {expanded && (
         <div className="border-l border-white/10 ml-3.5 pl-3 mt-1">
           <PlaylistLevelContent
             playlistId={playlist.id}
             directChildren={directChildren}
             tracksByPlaylist={tracksByPlaylist}
-            currentTrackId={currentTrackId}
           />
         </div>
       )}
@@ -492,14 +448,12 @@ interface PlaylistLevelContentProps {
   playlistId: string;
   directChildren: Playlist[];
   tracksByPlaylist: Map<string, TrackWithSource[]>;
-  currentTrackId: string | undefined;
 }
 
 function PlaylistLevelContent({
   playlistId,
   directChildren,
   tracksByPlaylist,
-  currentTrackId,
 }: PlaylistLevelContentProps) {
   const { containerItems } = useContext(DetailDndCtx);
   const { setNodeRef } = useDroppable({ id: playlistId });
@@ -520,14 +474,12 @@ function PlaylistLevelContent({
               key={m.item.id}
               track={m.item}
               index={i}
-              currentTrackId={currentTrackId}
             />
           ) : (
             <SortablePlaylistSection
               key={m.item.id}
               playlist={m.item}
               tracksByPlaylist={tracksByPlaylist}
-              currentTrackId={currentTrackId}
             />
           ),
         )}
@@ -558,7 +510,6 @@ export function PlaylistDetailView({ id }: Props) {
 
   const { data: playlists } = usePlaylistTree();
   const { data: tracks, isLoading, isError } = usePlaylistTracks(id);
-  const { playPlaylist, currentTrack, sourcePlaylistId } = usePlayerStore();
   const { mutate: deletePlaylist, isPending: isDeleting } = useDeletePlaylist();
   const { mutate: updatePlaylist } = useUpdatePlaylist();
 
@@ -683,7 +634,6 @@ export function PlaylistDetailView({ id }: Props) {
     const overId = String(over.id);
 
     const sourceContainerId = trackToContainer.get(activeId);
-    // over.id がトラックならそのコンテナ、それ以外（PLセクションやコンテナ）ならそのまま使う
     const targetContainerId = trackToContainer.get(overId) ?? overId;
 
     if (!sourceContainerId || !targetContainerId) return;
@@ -710,7 +660,6 @@ export function PlaylistDetailView({ id }: Props) {
       });
     } else {
       // クロスコンテナ: トラック移動
-      // プレイリストセクションは移動不可（トラックのみ）
       const activeItemInSource = displayContainerItems[sourceContainerId]?.find(
         (m) => m.item.id === activeId,
       );
@@ -745,14 +694,6 @@ export function PlaylistDetailView({ id }: Props) {
       setExportedUrls(data);
     },
   });
-
-  const handlePlay = async (includeChildren: boolean, shuffle: boolean) => {
-    if (!tracks) return;
-    const spotifyTracks: SpotifyTrack[] = tracks
-      .filter((t) => t.track)
-      .map((t) => t.track!);
-    await playPlaylist(id, spotifyTracks, { includeChildren, shuffle });
-  };
 
   const handleDelete = () => {
     deletePlaylist(id, {
@@ -863,28 +804,10 @@ export function PlaylistDetailView({ id }: Props) {
 
               <p className="text-foreground/50 text-sm mt-1 font-[family-name:var(--font-space-mono)]">
                 {tracks?.length ?? 0} 曲
-                {sourcePlaylistId === id && " · 再生中"}
               </p>
 
               {/* アクションボタン */}
               <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => handlePlay(true, false)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-medium hover:opacity-90 transition-opacity"
-                  style={{ background: "linear-gradient(135deg, #7c6af7, #f76a8a)" }}
-                >
-                  <Play size={16} />
-                  すべて再生
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePlay(true, true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
-                >
-                  <Shuffle size={16} />
-                  シャッフル
-                </button>
                 <button
                   type="button"
                   onClick={() => setIsAddingChild(true)}
@@ -967,7 +890,6 @@ export function PlaylistDetailView({ id }: Props) {
                 playlistId={id}
                 directChildren={directChildren}
                 tracksByPlaylist={tracksByPlaylist}
-                currentTrackId={currentTrack?.id}
               />
             </div>
           ) : (

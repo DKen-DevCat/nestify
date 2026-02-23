@@ -219,6 +219,17 @@
 ## PLツリーホバー時プリフェッチ（完了）
 - [x] PlaylistTreeNode: onMouseEnter で playlist-tracks をプリフェッチ（クリック前にフェッチ開始）
 
+## 再生機能の全削除（完了）
+- [x] playerStore.ts / spotify.ts / useSpotifyPlayer.ts / NowPlayingBar.tsx を削除
+- [x] PlaylistsLayoutClient.tsx から NowPlayingBar を除去
+- [x] PlaylistDetailView.tsx から handlePlay / Play / Shuffle ボタン / currentTrack / isCurrentTrack を除去
+
+## Spotify import 曲数0問題の修正（完了）
+- [x] api.ts: SpotifySimplifiedPlaylist.tracks を optional/nullable に変更
+- [x] ImportPlaylistModal.tsx: pl.tracks?.total ?? 0 で安全にアクセス
+- [x] spotifyService.ts: (tracksPage.items ?? []) と item?.track != null で null セーフ化
+- [x] spotifyService.ts バックエンド型も同様に修正
+
 ## トラックメタデータ DB キャッシュ（完了）
 - [x] DB スキーマ: playlist_tracks に 7 カラム追加（track_name/artists/album/duration/preview/image/cached_at）
 - [x] migration 0002_track_metadata_cache.sql 作成

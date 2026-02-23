@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Menu } from "lucide-react";
-import { NowPlayingBar } from "@/components/player/NowPlayingBar";
 import { PlaylistSidebar } from "./PlaylistSidebar";
 
 export function PlaylistsLayoutClient({
@@ -52,9 +51,6 @@ export function PlaylistsLayoutClient({
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
-
-      {/* 再生バー（下部固定） */}
-      <NowPlayingBar />
     </div>
   );
 }

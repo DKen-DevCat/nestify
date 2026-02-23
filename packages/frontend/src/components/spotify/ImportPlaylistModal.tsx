@@ -140,7 +140,7 @@ export function ImportPlaylistModal({ parentId = null, onClose }: Props) {
                     {pl.name}
                   </p>
                   <p className="text-xs text-foreground/40">
-                    {pl.tracks.total} 曲
+                    {pl.tracks?.total ?? 0} 曲
                   </p>
                 </div>
 
