@@ -4,7 +4,7 @@ export interface SpotifySimplifiedPlaylist {
   id: string;
   name: string;
   description: string | null;
-  images: { url: string }[];
+  images: { url: string }[] | null;
   tracks: { total: number };
 }
 

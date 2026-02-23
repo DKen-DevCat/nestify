@@ -197,3 +197,9 @@
 - [x] api.ts: api.spotify.exportTree 追加
 - [x] PlaylistDetailView.tsx: exportedUrl → exportedUrls(Record)、書き出しボタンと Spotify で開くボタンを分離（書き出し完了後に活性化）
 - [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認
+
+## 本番バグ修正: CORS + ImportPlaylistModal クラッシュ（完了）
+- [x] index.ts: cors({ origin: "*" }) に変更 + initDb() を try ブロック内に移動（CORSヘッダーが確実に付くように）
+- [x] ImportPlaylistModal.tsx: pl.images[0]?.url → pl.images?.[0]?.url（Spotify が images:null を返すと null[0] でクラッシュ）
+- [x] api.ts: SpotifySimplifiedPlaylist.images を `{ url: string }[] | null` に修正
+- [x] wrangler deploy で CF Workers を再デプロイ

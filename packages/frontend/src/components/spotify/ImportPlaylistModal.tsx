@@ -109,7 +109,7 @@ export function ImportPlaylistModal({ parentId = null, onClose }: Props) {
           )}
 
           {playlists.map((pl) => {
-            const imageUrl = pl.images[0]?.url;
+            const imageUrl = pl.images?.[0]?.url;
             const isImporting = importingId === pl.id;
 
             return (

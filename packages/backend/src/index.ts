@@ -26,8 +26,10 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: (origin) =>
-      origin ?? process.env.FRONTEND_URL ?? "http://localhost:3000",
+    origin: "*",
+    allowMethods: ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"],
+    allowHeaders: ["Authorization", "Content-Type"],
+    maxAge: 86400,
   }),
 );
 
@@ -68,8 +70,8 @@ async function fetchHandler(
   if (env.DB_MODE) process.env.DB_MODE = env.DB_MODE;
 
   // リクエストごとに新しい DB 接続を初期化し、終了後に破棄する
-  initDb();
   try {
+    initDb();
     return await app.fetch(request);
   } finally {
     await closeDb();
