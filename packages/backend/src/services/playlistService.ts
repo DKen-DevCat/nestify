@@ -479,6 +479,52 @@ export async function addTrack(
   };
 }
 
+/** トラックを別プレイリストへ移動 */
+export async function moveTrack(
+  trackId: string,
+  targetPlaylistId: string,
+  order: number,
+  userId: string,
+): Promise<Result<{ moved: boolean }>> {
+  if (isMockMode) {
+    const trackIndex = MOCK_TRACKS.findIndex((t) => t.id === trackId);
+    if (trackIndex === -1) {
+      return { ok: false, error: "Track not found", status: 404 };
+    }
+    const targetPlaylist = findFlatById(targetPlaylistId);
+    if (!targetPlaylist) {
+      return { ok: false, error: "Target playlist not found", status: 404 };
+    }
+    (MOCK_TRACKS[trackIndex] as { playlistId: string }).playlistId = targetPlaylistId;
+    (MOCK_TRACKS[trackIndex] as { order: number }).order = order;
+    return { ok: true, data: { moved: true } };
+  }
+
+  if (!db) return { ok: false, error: "DB not initialized", status: 500 };
+
+  // 所有権チェック（対象プレイリストが userId のものか確認）
+  const ownerCheck = await db
+    .select({ id: playlists.id })
+    .from(playlists)
+    .where(and(eq(playlists.id, targetPlaylistId), eq(playlists.userId, userId)));
+
+  if (ownerCheck.length === 0) {
+    return { ok: false, error: "Target playlist not found", status: 404 };
+  }
+
+  const updated = await db
+    .update(playlistTracks)
+    .set({ playlistId: targetPlaylistId, order })
+    .where(eq(playlistTracks.id, trackId))
+    .returning({ id: playlistTracks.id });
+
+  if (updated.length === 0) {
+    return { ok: false, error: "Track not found", status: 404 };
+  }
+
+  return { ok: true, data: { moved: true } };
+}
+
 /** 子孫を含む全トラック取得（DFS traversal — 混在並び替え順を正確に再現） */
 export async function getTracksRecursive(
   id: string,

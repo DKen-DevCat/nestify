@@ -12,6 +12,7 @@ interface Props {
   onSelect: (id: string) => void;
   onToggleExpand: (id: string) => void;
   depth?: number;
+  dragOverZone?: "before" | "inside" | "after";
 }
 
 export function PlaylistTreeNode({
@@ -21,6 +22,7 @@ export function PlaylistTreeNode({
   onSelect,
   onToggleExpand,
   depth = 0,
+  dragOverZone,
 }: Props) {
   const hasChildren = (playlist.children?.length ?? 0) > 0;
   const isExpanded = expandedIds.has(playlist.id);
@@ -56,13 +58,19 @@ export function PlaylistTreeNode({
   };
 
   return (
-    <li ref={setNodeRef} style={style}>
+    <li ref={setNodeRef} style={style} className="relative">
+      {/* 前インジケーター（上端ドロップ） */}
+      {dragOverZone === "before" && (
+        <div className="absolute top-0 left-2 right-2 h-0.5 bg-accent-purple rounded-full z-10 pointer-events-none" />
+      )}
+
       <div
         className={[
           "group flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer transition-colors",
           "hover:bg-white/5",
           isSelected ? "bg-accent-purple/20" : "",
           isDragging ? "ring-1 ring-accent-purple/40" : "",
+          dragOverZone === "inside" ? "ring-1 ring-accent-purple/60 bg-accent-purple/10" : "",
         ].join(" ")}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
         onClick={handleSelect}
@@ -125,6 +133,11 @@ export function PlaylistTreeNode({
           </span>
         )}
       </div>
+
+      {/* 後インジケーター（下端ドロップ） */}
+      {dragOverZone === "after" && (
+        <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-accent-purple rounded-full z-10 pointer-events-none" />
+      )}
 
       {/* 子ノードの再帰レンダリング */}
       {hasChildren && isExpanded && (

@@ -1,15 +1,24 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
   closestCenter,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -17,6 +26,7 @@ import {
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
   Play,
@@ -38,7 +48,6 @@ import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import { usePlayerStore } from "@/stores/playerStore";
 import {
   useDeletePlaylist,
-  useReorderItems,
   useUpdatePlaylist,
 } from "@/hooks/usePlaylistMutations";
 import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
@@ -115,6 +124,22 @@ function formatDate(isoString: string): string {
     return "--";
   }
 }
+
+// ---------------------------------------------------------------------------
+// Detail DnD Context（単一 DndContext 内でコンテナ情報を共有）
+// ---------------------------------------------------------------------------
+
+interface DetailDndCtxValue {
+  /** trackId → playlistId のマッピング */
+  trackToContainer: Map<string, string>;
+  /** playlistId → MixedItem[] のローカル表示状態 */
+  containerItems: Record<string, MixedItem[]>;
+}
+
+const DetailDndCtx = createContext<DetailDndCtxValue>({
+  trackToContainer: new Map(),
+  containerItems: {},
+});
 
 // ---------------------------------------------------------------------------
 // ソータブルなトラック行（直接追加のトラック用）
@@ -213,6 +238,52 @@ function SortableTrackItem({
         {track.track ? formatDuration(track.track.durationMs) : "--:--"}
       </span>
     </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DragOverlay 用トラック行（ドラッグ中の見た目）
+// ---------------------------------------------------------------------------
+
+function DragOverlayTrackItem({ track }: { track: TrackWithSource }) {
+  return (
+    <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-md items-center bg-[#1e1e1e] border border-accent-purple/30 shadow-xl opacity-90">
+      <span className="flex items-center justify-center text-foreground/40">
+        <GripVertical size={13} />
+      </span>
+      <span className="w-6" />
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-9 h-9 rounded shrink-0 overflow-hidden bg-white/5">
+          {track.track?.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={track.track.imageUrl}
+              alt={track.track.album}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Music2 size={12} className="text-foreground/20" />
+            </div>
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium truncate">
+            {track.track?.name ?? track.spotifyTrackId}
+          </p>
+          <p className="text-xs text-foreground/50 truncate">
+            {track.track?.artists.join(", ")}
+          </p>
+        </div>
+      </div>
+      <span className="text-foreground/40 text-xs truncate">
+        {track.track?.album ?? "--"}
+      </span>
+      <span />
+      <span className="text-foreground/30 text-xs font-[family-name:var(--font-space-mono)]">
+        {track.track ? formatDuration(track.track.durationMs) : "--:--"}
+      </span>
+    </div>
   );
 }
 
@@ -403,7 +474,6 @@ function SortablePlaylistSection({
         <div className="border-l border-white/10 ml-3.5 pl-3 mt-1">
           <PlaylistLevelContent
             playlistId={playlist.id}
-            directTracks={directTracks}
             directChildren={directChildren}
             tracksByPlaylist={tracksByPlaylist}
             currentTrackId={currentTrackId}
@@ -420,7 +490,6 @@ function SortablePlaylistSection({
 
 interface PlaylistLevelContentProps {
   playlistId: string;
-  directTracks: TrackWithSource[];
   directChildren: Playlist[];
   tracksByPlaylist: Map<string, TrackWithSource[]>;
   currentTrackId: string | undefined;
@@ -428,82 +497,42 @@ interface PlaylistLevelContentProps {
 
 function PlaylistLevelContent({
   playlistId,
-  directTracks,
   directChildren,
   tracksByPlaylist,
   currentTrackId,
 }: PlaylistLevelContentProps) {
-  const [localMixed, setLocalMixed] = useState<MixedItem[] | null>(null);
-  const { mutate: reorderItems } = useReorderItems(playlistId);
+  const { containerItems } = useContext(DetailDndCtx);
+  const { setNodeRef } = useDroppable({ id: playlistId });
 
-  const serverMixed = useMemo(
-    () => buildMixedList(directTracks, directChildren),
-    [directTracks, directChildren],
-  );
-
-  useEffect(() => {
-    setLocalMixed(null);
-  }, [directTracks, directChildren]);
-
-  const displayMixed = localMixed ?? serverMixed;
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = displayMixed.findIndex((m) => m.item.id === String(active.id));
-    const newIndex = displayMixed.findIndex((m) => m.item.id === String(over.id));
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const newMixed = arrayMove(displayMixed, oldIndex, newIndex);
-    setLocalMixed(newMixed);
-
-    reorderItems(
-      newMixed.map((m) => ({
-        type: m.kind === "track" ? ("track" as const) : ("playlist" as const),
-        id: m.item.id,
-      })),
-      { onError: () => setLocalMixed(null) },
-    );
-  };
+  const displayMixed = containerItems[playlistId] ?? [];
 
   if (displayMixed.length === 0) return null;
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
+    <SortableContext
+      items={displayMixed.map((m) => m.item.id)}
+      strategy={verticalListSortingStrategy}
     >
-      <SortableContext
-        items={displayMixed.map((m) => m.item.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <ul className="space-y-0.5">
-          {displayMixed.map((m, i) =>
-            m.kind === "track" ? (
-              <SortableTrackItem
-                key={m.item.id}
-                track={m.item}
-                index={i}
-                currentTrackId={currentTrackId}
-              />
-            ) : (
-              <SortablePlaylistSection
-                key={m.item.id}
-                playlist={m.item}
-                tracksByPlaylist={tracksByPlaylist}
-                currentTrackId={currentTrackId}
-              />
-            ),
-          )}
-        </ul>
-      </SortableContext>
-    </DndContext>
+      <ul ref={setNodeRef} className="space-y-0.5 min-h-[4px]">
+        {displayMixed.map((m, i) =>
+          m.kind === "track" ? (
+            <SortableTrackItem
+              key={m.item.id}
+              track={m.item}
+              index={i}
+              currentTrackId={currentTrackId}
+            />
+          ) : (
+            <SortablePlaylistSection
+              key={m.item.id}
+              playlist={m.item}
+              tracksByPlaylist={tracksByPlaylist}
+              currentTrackId={currentTrackId}
+            />
+          ),
+        )}
+      </ul>
+    </SortableContext>
   );
 }
 
@@ -513,12 +542,14 @@ function PlaylistLevelContent({
 
 export function PlaylistDetailView({ id }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isAddingChild, setIsAddingChild] = useState(false);
   const [isAddingTrack, setIsAddingTrack] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [exportedUrls, setExportedUrls] = useState<
     Record<string, { spotifyPlaylistId: string; url: string }>
   >({});
+  const [activeTrack, setActiveTrack] = useState<TrackWithSource | null>(null);
 
   // インライン名前変更
   const [isRenaming, setIsRenaming] = useState(false);
@@ -533,12 +564,6 @@ export function PlaylistDetailView({ id }: Props) {
 
   const playlist = playlists ? findPlaylistById(playlists, id) : undefined;
 
-  // 直接のトラック（ルートレベルDnD対象）
-  const directTracks = useMemo(
-    () => tracks?.filter((t) => t.playlistId === id) ?? [],
-    [tracks, id],
-  );
-
   // 全トラックを playlistId でグループ化（子セクション描画用）
   const tracksByPlaylist = useMemo(() => {
     const map = new Map<string, TrackWithSource[]>();
@@ -549,6 +574,166 @@ export function PlaylistDetailView({ id }: Props) {
     }
     return map;
   }, [tracks]);
+
+  // サーバーデータから containerItems を構築
+  const serverContainerItems = useMemo(() => {
+    const result: Record<string, MixedItem[]> = {};
+    const buildForNode = (pl: Playlist) => {
+      const directTracks = tracksByPlaylist.get(pl.id) ?? [];
+      const directChildren = pl.children ?? [];
+      result[pl.id] = buildMixedList(directTracks, directChildren);
+      for (const child of directChildren) {
+        buildForNode(child);
+      }
+    };
+    if (playlist) buildForNode(playlist);
+    return result;
+  }, [tracksByPlaylist, playlist]);
+
+  // 楽観的更新用ローカル状態
+  const [localContainerItems, setLocalContainerItems] = useState<Record<
+    string,
+    MixedItem[]
+  > | null>(null);
+
+  // サーバーデータが変わったらローカル状態をリセット
+  useEffect(() => {
+    setLocalContainerItems(null);
+  }, [serverContainerItems]);
+
+  const displayContainerItems = localContainerItems ?? serverContainerItems;
+
+  // trackId → playlistId のマップを構築
+  const trackToContainer = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const [playlistId, items] of Object.entries(displayContainerItems)) {
+      for (const m of items) {
+        if (m.kind === "track") {
+          map.set(m.item.id, playlistId);
+        }
+      }
+    }
+    return map;
+  }, [displayContainerItems]);
+
+  const dndCtxValue = useMemo(
+    () => ({ trackToContainer, containerItems: displayContainerItems }),
+    [trackToContainer, displayContainerItems],
+  );
+
+  // reorderItems mutation（playlistId を動的に指定）
+  const { mutate: reorderItemsMutate } = useMutation({
+    mutationFn: ({
+      playlistId,
+      items,
+    }: {
+      playlistId: string;
+      items: Array<{ type: "track" | "playlist"; id: string }>;
+    }) => api.playlists.reorderItems(playlistId, items),
+    onError: () => {
+      setLocalContainerItems(null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
+    },
+  });
+
+  // moveTrack mutation
+  const { mutate: moveTrackMutate } = useMutation({
+    mutationFn: ({
+      trackId,
+      targetPlaylistId,
+      order,
+    }: {
+      trackId: string;
+      targetPlaylistId: string;
+      order: number;
+    }) => api.playlists.moveTrack(id, trackId, targetPlaylistId, order),
+    onError: () => {
+      setLocalContainerItems(null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
+    },
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const activeId = String(event.active.id);
+    const containerId = trackToContainer.get(activeId);
+    if (!containerId) return;
+    const items = displayContainerItems[containerId] ?? [];
+    const found = items.find((m) => m.kind === "track" && m.item.id === activeId);
+    if (found?.kind === "track") {
+      setActiveTrack(found.item);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTrack(null);
+
+    if (!over || active.id === over.id) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    const sourceContainerId = trackToContainer.get(activeId);
+    // over.id がトラックならそのコンテナ、それ以外（PLセクションやコンテナ）ならそのまま使う
+    const targetContainerId = trackToContainer.get(overId) ?? overId;
+
+    if (!sourceContainerId || !targetContainerId) return;
+
+    if (sourceContainerId === targetContainerId) {
+      // 同一コンテナ: 並び替え
+      const items = displayContainerItems[sourceContainerId] ?? [];
+      const oldIndex = items.findIndex((m) => m.item.id === activeId);
+      const newIndex = items.findIndex((m) => m.item.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      setLocalContainerItems((prev) => ({
+        ...(prev ?? displayContainerItems),
+        [sourceContainerId]: newItems,
+      }));
+
+      reorderItemsMutate({
+        playlistId: sourceContainerId,
+        items: newItems.map((m) => ({
+          type: m.kind === "track" ? ("track" as const) : ("playlist" as const),
+          id: m.item.id,
+        })),
+      });
+    } else {
+      // クロスコンテナ: トラック移動
+      // プレイリストセクションは移動不可（トラックのみ）
+      const activeItemInSource = displayContainerItems[sourceContainerId]?.find(
+        (m) => m.item.id === activeId,
+      );
+      if (!activeItemInSource || activeItemInSource.kind !== "track") return;
+
+      const targetItems = displayContainerItems[targetContainerId] ?? [];
+      const order = targetItems.filter((m) => m.kind === "track").length;
+
+      // 楽観的更新
+      setLocalContainerItems((prev) => {
+        const current = prev ?? displayContainerItems;
+        return {
+          ...current,
+          [sourceContainerId]: (current[sourceContainerId] ?? []).filter(
+            (m) => m.item.id !== activeId,
+          ),
+          [targetContainerId]: [...(current[targetContainerId] ?? []), activeItemInSource],
+        };
+      });
+
+      moveTrackMutate({ trackId: activeId, targetPlaylistId: targetContainerId, order });
+    }
+  };
 
   const { mutate: exportPlaylist, isPending: isExporting } = useMutation({
     mutationFn: async () => {
@@ -608,236 +793,252 @@ export function PlaylistDetailView({ id }: Props) {
   }
 
   const directChildren = playlist?.children ?? [];
-  const hasContent = directTracks.length > 0 || directChildren.length > 0;
+  const hasContent =
+    Object.values(displayContainerItems).some((items) => items.length > 0);
 
   return (
-    <div className="space-y-6">
-      {/* ヘッダー */}
-      <div className="flex items-start gap-4">
-        <div
-          className="w-20 h-20 rounded-xl shrink-0 overflow-hidden"
-          style={{
-            background: playlist?.imageUrl
-              ? undefined
-              : (playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)"),
-          }}
-        >
-          {playlist?.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={playlist.imageUrl}
-              alt={playlist.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="w-full h-full flex items-center justify-center text-4xl">
-              {playlist?.icon ?? "🎵"}
-            </span>
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          {/* プレイリスト名（クリックでインライン編集） */}
-          {isRenaming ? (
-            <input
-              ref={renameInputRef}
-              type="text"
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              onBlur={handleRenameSubmit}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleRenameSubmit();
-                if (e.key === "Escape") setIsRenaming(false);
+    <DetailDndCtx.Provider value={dndCtxValue}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => setActiveTrack(null)}
+      >
+        <div className="space-y-6">
+          {/* ヘッダー */}
+          <div className="flex items-start gap-4">
+            <div
+              className="w-20 h-20 rounded-xl shrink-0 overflow-hidden"
+              style={{
+                background: playlist?.imageUrl
+                  ? undefined
+                  : (playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)"),
               }}
-              className="font-[family-name:var(--font-syne)] text-2xl font-bold bg-transparent border-b border-accent-purple/50 outline-none w-full text-foreground"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={startRenaming}
-              title="クリックして名前を変更"
-              className="group flex items-center gap-2 text-left w-full"
             >
-              <h1 className="font-[family-name:var(--font-syne)] text-2xl font-bold truncate">
-                {playlist?.name ?? "プレイリスト"}
-              </h1>
-              <Pencil
-                size={14}
-                className="text-foreground/20 group-hover:text-foreground/50 transition-colors shrink-0"
-              />
-            </button>
-          )}
-
-          <p className="text-foreground/50 text-sm mt-1 font-[family-name:var(--font-space-mono)]">
-            {tracks?.length ?? 0} 曲
-            {sourcePlaylistId === id && " · 再生中"}
-          </p>
-
-          {/* アクションボタン */}
-          <div className="flex items-center gap-2 mt-3 flex-wrap">
-            <button
-              type="button"
-              onClick={() => handlePlay(true, false)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-medium hover:opacity-90 transition-opacity"
-              style={{ background: "linear-gradient(135deg, #7c6af7, #f76a8a)" }}
-            >
-              <Play size={16} />
-              すべて再生
-            </button>
-            <button
-              type="button"
-              onClick={() => handlePlay(true, true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
-            >
-              <Shuffle size={16} />
-              シャッフル
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAddingChild(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
-            >
-              <Plus size={16} />
-              サブPL
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsAddingTrack(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
-            >
-              <ListPlus size={16} />
-              曲を追加
-            </button>
-            {/* 書き出しボタン */}
-            <button
-              type="button"
-              onClick={() => exportPlaylist()}
-              disabled={isExporting}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors disabled:opacity-40"
-            >
-              {isExporting ? (
-                <div className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
+              {playlist?.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={playlist.imageUrl}
+                  alt={playlist.name}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <Upload size={16} />
+                <span className="w-full h-full flex items-center justify-center text-4xl">
+                  {playlist?.icon ?? "🎵"}
+                </span>
               )}
-              Spotify へ書き出し
-            </button>
-            {/* Spotify で開くボタン（書き出し完了後に活性化） */}
-            {exportedUrls[id] ? (
-              <a
-                href={exportedUrls[id].url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-accent-green/30 text-accent-green text-sm hover:bg-accent-green/10 transition-colors"
-              >
-                <ExternalLink size={14} />
-                Spotify で開く
-              </a>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-white/10 text-foreground/20 text-sm cursor-not-allowed"
-              >
-                <ExternalLink size={14} />
-                Spotify で開く
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-full text-foreground/30 text-sm hover:text-accent-pink hover:bg-accent-pink/10 transition-colors ml-auto"
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
-        </div>
-      </div>
+            </div>
+            <div className="min-w-0 flex-1">
+              {/* プレイリスト名（クリックでインライン編集） */}
+              {isRenaming ? (
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onBlur={handleRenameSubmit}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleRenameSubmit();
+                    if (e.key === "Escape") setIsRenaming(false);
+                  }}
+                  className="font-[family-name:var(--font-syne)] text-2xl font-bold bg-transparent border-b border-accent-purple/50 outline-none w-full text-foreground"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={startRenaming}
+                  title="クリックして名前を変更"
+                  className="group flex items-center gap-2 text-left w-full"
+                >
+                  <h1 className="font-[family-name:var(--font-syne)] text-2xl font-bold truncate">
+                    {playlist?.name ?? "プレイリスト"}
+                  </h1>
+                  <Pencil
+                    size={14}
+                    className="text-foreground/20 group-hover:text-foreground/50 transition-colors shrink-0"
+                  />
+                </button>
+              )}
 
-      {/* ─── コンテンツリスト ─── */}
-      {hasContent ? (
-        <div>
-          {/* カラムヘッダー（直接トラックがある場合のみ表示） */}
-          {directTracks.length > 0 && (
-            <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 text-foreground/30 text-xs border-b border-white/5 mb-1">
-              <span />
-              <span className="w-6 text-center">#</span>
-              <span>タイトル</span>
-              <span>アルバム</span>
-              <span>追加日</span>
-              <span className="flex items-center justify-end">
-                <Clock size={12} />
-              </span>
+              <p className="text-foreground/50 text-sm mt-1 font-[family-name:var(--font-space-mono)]">
+                {tracks?.length ?? 0} 曲
+                {sourcePlaylistId === id && " · 再生中"}
+              </p>
+
+              {/* アクションボタン */}
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => handlePlay(true, false)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                  style={{ background: "linear-gradient(135deg, #7c6af7, #f76a8a)" }}
+                >
+                  <Play size={16} />
+                  すべて再生
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePlay(true, true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
+                >
+                  <Shuffle size={16} />
+                  シャッフル
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingChild(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
+                >
+                  <Plus size={16} />
+                  サブPL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingTrack(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors"
+                >
+                  <ListPlus size={16} />
+                  曲を追加
+                </button>
+                {/* 書き出しボタン */}
+                <button
+                  type="button"
+                  onClick={() => exportPlaylist()}
+                  disabled={isExporting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/20 text-foreground/80 text-sm hover:bg-white/5 transition-colors disabled:opacity-40"
+                >
+                  {isExporting ? (
+                    <div className="w-4 h-4 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Upload size={16} />
+                  )}
+                  Spotify へ書き出し
+                </button>
+                {/* Spotify で開くボタン（書き出し完了後に活性化） */}
+                {exportedUrls[id] ? (
+                  <a
+                    href={exportedUrls[id].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-accent-green/30 text-accent-green text-sm hover:bg-accent-green/10 transition-colors"
+                  >
+                    <ExternalLink size={14} />
+                    Spotify で開く
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-white/10 text-foreground/20 text-sm cursor-not-allowed"
+                  >
+                    <ExternalLink size={14} />
+                    Spotify で開く
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-full text-foreground/30 text-sm hover:text-accent-pink hover:bg-accent-pink/10 transition-colors ml-auto"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ─── コンテンツリスト ─── */}
+          {hasContent ? (
+            <div>
+              {/* カラムヘッダー（直接トラックがある場合のみ表示） */}
+              {(displayContainerItems[id] ?? []).some((m) => m.kind === "track") && (
+                <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 text-foreground/30 text-xs border-b border-white/5 mb-1">
+                  <span />
+                  <span className="w-6 text-center">#</span>
+                  <span>タイトル</span>
+                  <span>アルバム</span>
+                  <span>追加日</span>
+                  <span className="flex items-center justify-end">
+                    <Clock size={12} />
+                  </span>
+                </div>
+              )}
+              <PlaylistLevelContent
+                playlistId={id}
+                directChildren={directChildren}
+                tracksByPlaylist={tracksByPlaylist}
+                currentTrackId={currentTrack?.id}
+              />
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-foreground/30 text-sm">曲がありません</p>
+              <p className="text-foreground/20 text-xs mt-1">
+                Spotify から曲を追加してください
+              </p>
             </div>
           )}
-          <PlaylistLevelContent
-            playlistId={id}
-            directTracks={directTracks}
-            directChildren={directChildren}
-            tracksByPlaylist={tracksByPlaylist}
-            currentTrackId={currentTrack?.id}
-          />
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-foreground/30 text-sm">曲がありません</p>
-          <p className="text-foreground/20 text-xs mt-1">
-            Spotify から曲を追加してください
-          </p>
-        </div>
-      )}
 
-      {/* サブプレイリスト作成モーダル */}
-      {isAddingChild && (
-        <CreatePlaylistModal
-          parentId={id}
-          onClose={() => setIsAddingChild(false)}
-        />
-      )}
+          {/* サブプレイリスト作成モーダル */}
+          {isAddingChild && (
+            <CreatePlaylistModal
+              parentId={id}
+              onClose={() => setIsAddingChild(false)}
+            />
+          )}
 
-      {/* 曲を追加モーダル */}
-      {isAddingTrack && (
-        <AddTrackModal
-          playlistId={id}
-          onClose={() => setIsAddingTrack(false)}
-        />
-      )}
+          {/* 曲を追加モーダル */}
+          {isAddingTrack && (
+            <AddTrackModal
+              playlistId={id}
+              playlist={playlist}
+              onClose={() => setIsAddingTrack(false)}
+            />
+          )}
 
-      {/* 削除確認ダイアログ */}
-      {confirmDelete && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setConfirmDelete(false)}
-        >
-          <div
-            className="bg-[#141414] border border-white/10 rounded-2xl p-6 w-full max-w-xs mx-4 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="font-[family-name:var(--font-syne)] text-base font-bold mb-2">
-              プレイリストを削除
-            </h2>
-            <p className="text-foreground/50 text-sm mb-5">
-              「{playlist?.name}」を削除します。子プレイリストも含めて削除されます。
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-                className="flex-1 py-2 rounded-lg border border-white/10 text-sm text-foreground/60 hover:bg-white/5"
+          {/* 削除確認ダイアログ */}
+          {confirmDelete && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+              onClick={() => setConfirmDelete(false)}
+            >
+              <div
+                className="bg-[#141414] border border-white/10 rounded-2xl p-6 w-full max-w-xs mx-4 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
               >
-                キャンセル
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="flex-1 py-2 rounded-lg bg-accent-pink/20 text-accent-pink text-sm font-medium hover:bg-accent-pink/30 disabled:opacity-40 transition-colors"
-              >
-                削除
-              </button>
+                <h2 className="font-[family-name:var(--font-syne)] text-base font-bold mb-2">
+                  プレイリストを削除
+                </h2>
+                <p className="text-foreground/50 text-sm mb-5">
+                  「{playlist?.name}」を削除します。子プレイリストも含めて削除されます。
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 py-2 rounded-lg border border-white/10 text-sm text-foreground/60 hover:bg-white/5"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="flex-1 py-2 rounded-lg bg-accent-pink/20 text-accent-pink text-sm font-medium hover:bg-accent-pink/30 disabled:opacity-40 transition-colors"
+                  >
+                    削除
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
+
+        {/* DragOverlay */}
+        <DragOverlay>
+          {activeTrack ? <DragOverlayTrackItem track={activeTrack} /> : null}
+        </DragOverlay>
+      </DndContext>
+    </DetailDndCtx.Provider>
   );
 }

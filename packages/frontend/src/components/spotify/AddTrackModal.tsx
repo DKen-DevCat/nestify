@@ -1,15 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, Search, Plus, Check, Music2, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { useAddTrack } from "@/hooks/usePlaylistMutations";
-import type { SpotifyTrack } from "@nestify/shared";
+import type { Playlist, SpotifyTrack } from "@nestify/shared";
 
 interface Props {
   playlistId: string;
+  playlist?: Playlist;
   onClose: () => void;
+}
+
+function collectDescendants(pl: Playlist): Playlist[] {
+  return [pl, ...(pl.children ?? []).flatMap(collectDescendants)];
 }
 
 function formatDuration(ms: number): string {
@@ -19,11 +23,19 @@ function formatDuration(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-export function AddTrackModal({ playlistId, onClose }: Props) {
+export function AddTrackModal({ playlistId, playlist, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+  const [targetPlaylistId, setTargetPlaylistId] = useState(playlistId);
+  const [isAdding, setIsAdding] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
+  const descendants = useMemo(
+    () => (playlist ? collectDescendants(playlist) : []),
+    [playlist],
+  );
 
   // 入力から 400ms 後に検索クエリを確定
   useEffect(() => {
@@ -55,15 +67,15 @@ export function AddTrackModal({ playlistId, onClose }: Props) {
     retry: 1,
   });
 
-  const { mutate: addTrack, isPending: isAdding } = useAddTrack(playlistId);
-
-  const handleAdd = (track: SpotifyTrack) => {
+  const handleAdd = async (track: SpotifyTrack) => {
     if (addedIds.has(track.id) || isAdding) return;
-    addTrack(track.id, {
-      onSuccess: () => {
-        setAddedIds((prev) => new Set(prev).add(track.id));
-      },
-    });
+    setIsAdding(true);
+    const res = await api.playlists.addTrack(targetPlaylistId, track.id);
+    setIsAdding(false);
+    if (res.ok) {
+      setAddedIds((prev) => new Set(prev).add(track.id));
+      queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -112,6 +124,24 @@ export function AddTrackModal({ playlistId, onClose }: Props) {
             )}
           </div>
         </div>
+
+        {/* 追加先選択 */}
+        {descendants.length > 1 && (
+          <div className="px-5 py-2 border-b border-white/5 flex items-center gap-2">
+            <span className="text-xs text-foreground/40 shrink-0">追加先:</span>
+            <select
+              value={targetPlaylistId}
+              onChange={(e) => setTargetPlaylistId(e.target.value)}
+              className="flex-1 bg-white/5 text-xs text-foreground/80 rounded px-2 py-1 outline-none border border-white/10 cursor-pointer"
+            >
+              {descendants.map((d) => (
+                <option key={d.id} value={d.id} className="bg-[#141414]">
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* 検索結果 */}
         <div className="flex-1 overflow-y-auto">

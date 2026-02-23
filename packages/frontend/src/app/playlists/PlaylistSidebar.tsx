@@ -10,6 +10,16 @@ import { usePlaylistStore } from "@/stores/playlistStore";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { useUpdatePlaylist } from "@/hooks/usePlaylistMutations";
 import { useSidebar } from "@/hooks/useSidebar";
+import type { Playlist } from "@nestify/shared";
+
+function findPlaylistById(pls: Playlist[], id: string): Playlist | undefined {
+  for (const p of pls) {
+    if (p.id === id) return p;
+    const found = findPlaylistById(p.children ?? [], id);
+    if (found) return found;
+  }
+  return undefined;
+}
 
 interface PlaylistSidebarProps {
   /** モバイル drawer 利用時: プレイリスト選択後に呼ばれるコールバック */
@@ -52,6 +62,25 @@ export function PlaylistSidebar({ onNavigate }: PlaylistSidebarProps) {
 
     updatePlaylist({ id: activeId, dto: { order: overIndex } });
     updatePlaylist({ id: overId, dto: { order: activeIndex } });
+  };
+
+  const handleNest = (activeId: string, newParentId: string) => {
+    if (!playlists) return;
+
+    // 循環参照チェック: newParentId が activeId の子孫でないことを確認
+    const isDescendantOf = (targetId: string, ancestorId: string): boolean => {
+      const ancestor = findPlaylistById(playlists, ancestorId);
+      if (!ancestor) return false;
+      const check = (pl: Playlist): boolean =>
+        pl.id === targetId || (pl.children ?? []).some(check);
+      return check(ancestor);
+    };
+
+    if (isDescendantOf(newParentId, activeId)) return;
+
+    const newParent = findPlaylistById(playlists, newParentId);
+    const order = newParent?.children?.length ?? 0;
+    updatePlaylist({ id: activeId, dto: { parentId: newParentId, order } });
   };
 
   return (
@@ -128,6 +157,7 @@ export function PlaylistSidebar({ onNavigate }: PlaylistSidebarProps) {
               onSelect={handleSelect}
               onToggleExpand={toggleExpand}
               onReorder={handleReorder}
+              onNest={handleNest}
             />
           )}
         </div>

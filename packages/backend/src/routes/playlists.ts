@@ -12,6 +12,7 @@ import {
   reorderTracks,
   reorderItems,
   addTrack,
+  moveTrack,
 } from "../services/playlistService";
 import { enrichTracksWithSpotifyData } from "../services/spotifyService";
 
@@ -136,6 +137,27 @@ playlistRoutes.post(
       return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
     }
     return c.json({ ok: true, data: result.data }, 201);
+  },
+);
+
+playlistRoutes.patch(
+  "/:id/tracks/:trackId/move",
+  zValidator(
+    "json",
+    z.object({
+      targetPlaylistId: z.string().uuid(),
+      order: z.number().int().min(0).optional(),
+    }),
+  ),
+  async (c) => {
+    const userId = c.get("userId");
+    const trackId = c.req.param("trackId");
+    const { targetPlaylistId, order } = c.req.valid("json");
+    const result = await moveTrack(trackId, targetPlaylistId, order ?? 0, userId);
+    if (!result.ok) {
+      return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
+    }
+    return c.json({ ok: true, data: result.data });
   },
 );
 

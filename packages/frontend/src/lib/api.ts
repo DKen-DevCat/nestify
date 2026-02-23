@@ -97,6 +97,19 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ spotifyTrackId }),
       }),
+    moveTrack: (
+      playlistId: string,
+      trackId: string,
+      targetPlaylistId: string,
+      order?: number,
+    ) =>
+      apiFetch<{ moved: boolean }>(
+        `/api/playlists/${playlistId}/tracks/${trackId}/move`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ targetPlaylistId, order }),
+        },
+      ),
   },
   spotify: {
     myPlaylists: () =>

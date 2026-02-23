@@ -203,3 +203,15 @@
 - [x] ImportPlaylistModal.tsx: pl.images[0]?.url → pl.images?.[0]?.url（Spotify が images:null を返すと null[0] でクラッシュ）
 - [x] api.ts: SpotifySimplifiedPlaylist.images を `{ url: string }[] | null` に修正
 - [x] wrangler deploy で CF Workers を再デプロイ
+
+## 3機能追加（完了）
+- [x] Feature 2: AddTrackModal に追加先プレイリスト選択ドロップダウンを追加（子孫PL一覧、デフォルト=現在PL）
+- [x] BE: moveTrack サービス関数 + PATCH /:id/tracks/:trackId/move ルート追加（mock/DB両対応）
+- [x] FE: api.playlists.moveTrack + useMoveTrack hook 追加
+- [x] Feature 3: PlaylistTree に onDragOver ゾーン判定DnD追加（上端=前/中央=子にネスト/下端=後）
+- [x] Feature 3: PlaylistTreeNode に dragOverZone prop + 視覚インジケーター（before/inside/after）追加
+- [x] Feature 3: PlaylistSidebar に handleNest（循環参照防止付き）+ findPlaylistById ヘルパー追加
+- [x] Feature 1: PlaylistDetailView を単一 DndContext に統合（DetailDndCtx + containerItems + trackToContainer）
+- [x] Feature 1: クロスコンテナ曲移動（moveTrack API 呼び出し + 楽観的更新 + エラー時ロールバック）
+- [x] Feature 1: DragOverlay でドラッグ中の見た目を表示
+- [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認

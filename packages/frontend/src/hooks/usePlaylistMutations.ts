@@ -77,3 +77,22 @@ export function useAddTrack(playlistId: string) {
     },
   });
 }
+
+export function useMoveTrack(sourcePlaylistId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      trackId,
+      targetPlaylistId,
+      order,
+    }: {
+      trackId: string;
+      targetPlaylistId: string;
+      order?: number;
+    }) => api.playlists.moveTrack(sourcePlaylistId, trackId, targetPlaylistId, order),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
+    },
+  });
+}
