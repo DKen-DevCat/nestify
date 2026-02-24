@@ -40,6 +40,7 @@ bun-error.log*
 
 # Claude Code local settings (personal, not committed)
 .claude/settings.local.json
+.claude/.auto-review-lock
 
 # typescript
 *.tsbuildinfo

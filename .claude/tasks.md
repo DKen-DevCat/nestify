@@ -269,6 +269,12 @@
 - [x] login/page.tsx: index:true + OG metadata を追加（唯一の公開ページ）
 - [x] playlists/layout.tsx: robots noindex を明示
 
+## Codex レビュー自動対応（完了）
+- [x] trigger-codex-review.sh: Codex レビュー後に claude --dangerously-skip-permissions -p で自動対応を起動
+- [x] .auto-review-lock ファイルで Stop フックの再帰呼び出しを防止（1段階のみ）
+- [x] settings.local.json / .example: timeout を 120 → 300 秒に変更
+- [x] .gitignore に .auto-review-lock を追加
+
 ## pre-push フック追加（完了）
 - [x] .husky/pre-push 作成：plan.md に「Claude Code 対応待ち」が残っていると push をブロック
 - [x] 実行権限付与・動作確認（未対応なし → 通過、未対応あり → ブロック）
