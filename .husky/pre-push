@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# .husky/pre-push
+# push 前に Codex レビューへの未対応がないか確認する
+
+PLAN_FILE=".claude/plan.md"
+
+[ ! -f "$PLAN_FILE" ] && exit 0
+grep -q "Claude Code 対応待ち" "$PLAN_FILE" || exit 0
+
+echo ""
+echo "┌─────────────────────────────────────────────────────┐"
+echo "│  Codex レビューが未対応のまま push しようとしています│"
+echo "│                                                     │"
+echo "│  .claude/plan.md に「Claude Code 対応待ち」の        │"
+echo "│  レビューが残っています。                           │"
+echo "│                                                     │"
+echo "│  対応手順:                                          │"
+echo "│    1. Claude Code:「plan.md のレビューに対応して」  │"
+echo "│    2. コミット（tasks.md も更新）                   │"
+echo "│    3. git push                                      │"
+echo "│                                                     │"
+echo "│  スキップする場合: git push --no-verify             │"
+echo "└─────────────────────────────────────────────────────┘"
+echo ""
+echo "未対応レビュー:"
+grep -B 2 "Claude Code 対応待ち" "$PLAN_FILE" \
+  | grep "## Codex レビュー" \
+  | sed 's/## Codex レビュー/  →/'
+echo ""
+
+exit 1

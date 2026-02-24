@@ -269,6 +269,10 @@
 - [x] login/page.tsx: index:true + OG metadata を追加（唯一の公開ページ）
 - [x] playlists/layout.tsx: robots noindex を明示
 
+## pre-push フック追加（完了）
+- [x] .husky/pre-push 作成：plan.md に「Claude Code 対応待ち」が残っていると push をブロック
+- [x] 実行権限付与・動作確認（未対応なし → 通過、未対応あり → ブロック）
+
 ## Codex レビュー対応 — 2026-02-24（完了）
 - [x] robots.ts: 同一 user-agent に別ルールを2つ記述していた曖昧な書き方を、単一ルール（allow + disallow）に統合
 - [x] layout.tsx: openGraph.images を明示追加（/opengraph-image への参照）
