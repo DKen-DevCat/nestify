@@ -11,6 +11,7 @@
   },
   "devDependencies": {
     "husky": "^9",
+    "shadcn": "^3.8.5",
     "turbo": "latest"
   }
 }
