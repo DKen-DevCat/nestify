@@ -258,3 +258,4 @@
 - [x] CreatePlaylistModal / AddTrackModal / ImportPlaylistModal を next/dynamic で遅延ロード（初期バンドル削減）
 - [x] staleTime を 30-60s → 5min に延長（playlists / playlist-tracks / spotify-playlists / prefetch）
 - [x] .claude/skills に nextjs-optimization / react-best-practices を追加
+- [x] babel-plugin-react-compiler をインストール（React Compiler 動作に必要）
