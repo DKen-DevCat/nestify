@@ -259,3 +259,12 @@
 - [x] staleTime を 30-60s → 5min に延長（playlists / playlist-tracks / spotify-playlists / prefetch）
 - [x] .claude/skills に nextjs-optimization / react-best-practices を追加
 - [x] babel-plugin-react-compiler をインストール（React Compiler 動作に必要）
+
+## SEO 最適化（完了）
+- [x] layout.tsx: metadataBase / title template / description / keywords / OG / Twitter Card / robots(noindex) 追加
+- [x] opengraph-image.tsx: Edge Runtime の動的 OG 画像生成（ImageResponse）
+- [x] robots.ts: 全ページ noindex、/login のみ allow
+- [x] sitemap.ts: /login のみ収録
+- [x] manifest.ts: PWA マニフェスト（name / theme_color / background_color / icons）
+- [x] login/page.tsx: index:true + OG metadata を追加（唯一の公開ページ）
+- [x] playlists/layout.tsx: robots noindex を明示

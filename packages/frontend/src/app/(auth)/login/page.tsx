@@ -1,3 +1,20 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "ログイン",
+  description:
+    "Spotify アカウントでログインして、ネスト型プレイリスト管理を始めましょう。",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "Nestify — ログイン",
+    description:
+      "Spotify アカウントでログインして、ネスト型プレイリスト管理を始めましょう。",
+  },
+};
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const IS_DEV = process.env.NODE_ENV !== "production";
 

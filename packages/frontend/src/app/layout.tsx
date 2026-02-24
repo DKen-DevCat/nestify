@@ -14,9 +14,36 @@ const spaceMono = Space_Mono({
   weight: ["400", "700"],
 });
 
+const SITE_URL = "https://nestify-frontend-57y3.vercel.app";
+const SITE_DESCRIPTION =
+  "Spotify のプレイリストをフォルダのように無限にネストして管理。子孫プレイリストを含めたシャッフル再生にも対応。";
+
 export const metadata: Metadata = {
-  title: "Nestify",
-  description: "ネスト型プレイリスト管理アプリ",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Nestify",
+    template: "%s | Nestify",
+  },
+  description: SITE_DESCRIPTION,
+  keywords: ["Spotify", "プレイリスト", "ネスト", "音楽管理", "Nestify"],
+  authors: [{ name: "Nestify" }],
+  openGraph: {
+    title: "Nestify — ネスト型プレイリスト管理",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: "Nestify",
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nestify — ネスト型プレイリスト管理",
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
