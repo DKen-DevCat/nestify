@@ -41,15 +41,22 @@ import {
   ChevronRight,
   Pencil,
 } from "lucide-react";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { usePlaylistTracks } from "@/hooks/usePlaylistTracks";
 import {
   useDeletePlaylist,
   useUpdatePlaylist,
 } from "@/hooks/usePlaylistMutations";
-import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
-import { AddTrackModal } from "@/components/spotify/AddTrackModal";
 import { api } from "@/lib/api";
+
+const CreatePlaylistModal = dynamic(() =>
+  import("@/components/playlist/CreatePlaylistModal").then((m) => ({ default: m.CreatePlaylistModal }))
+);
+const AddTrackModal = dynamic(() =>
+  import("@/components/spotify/AddTrackModal").then((m) => ({ default: m.AddTrackModal }))
+);
 import type { Playlist } from "@nestify/shared";
 import type { TrackWithSource } from "@/lib/api";
 
@@ -185,15 +192,16 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
 
       <div className="flex items-center gap-3 min-w-0">
         <div
-          className="w-9 h-9 rounded-md shrink-0 overflow-hidden bg-white/5 transition-transform duration-150 group-hover:scale-[1.05]"
+          className="relative w-9 h-9 rounded-md shrink-0 overflow-hidden bg-white/5 transition-transform duration-150 group-hover:scale-[1.05]"
           style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
         >
           {track.track?.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={track.track.imageUrl}
               alt={track.track.album}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="36px"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -245,13 +253,14 @@ function DragOverlayTrackItem({ track }: { track: TrackWithSource }) {
       </span>
       <span className="w-6" />
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-md shrink-0 overflow-hidden bg-white/5">
+        <div className="relative w-9 h-9 rounded-md shrink-0 overflow-hidden bg-white/5">
           {track.track?.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={track.track.imageUrl}
               alt={track.track.album}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="36px"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -291,13 +300,14 @@ function SimpleTrackItem({ track, index }: { track: TrackWithSource; index: numb
       </span>
 
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-md shrink-0 overflow-hidden bg-white/5">
+        <div className="relative w-8 h-8 rounded-md shrink-0 overflow-hidden bg-white/5">
           {track.track?.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={track.track.imageUrl}
               alt={track.track.album}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="32px"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -400,12 +410,15 @@ function SortablePlaylistSection({
           {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
         </button>
         {playlist.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={playlist.imageUrl}
-            alt={playlist.name}
-            className="w-5 h-5 rounded shrink-0 object-cover"
-          />
+          <div className="relative w-5 h-5 rounded shrink-0 overflow-hidden">
+            <Image
+              src={playlist.imageUrl}
+              alt={playlist.name}
+              fill
+              className="object-cover"
+              sizes="20px"
+            />
+          </div>
         ) : (
           <span className="text-base leading-none shrink-0">{playlist.icon}</span>
         )}
@@ -784,11 +797,13 @@ export function PlaylistDetailView({ id }: Props) {
               }}
             >
               {playlist?.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={playlist.imageUrl}
                   alt={playlist.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="96px"
+                  priority
                 />
               ) : (
                 <span className="w-full h-full flex items-center justify-center text-4xl">

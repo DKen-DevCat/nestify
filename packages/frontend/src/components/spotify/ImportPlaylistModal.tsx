@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { X, Download, Search, Music2, AlertCircle } from "lucide-react";
+import Image from "next/image";
 import { api } from "@/lib/api";
 
 interface Props {
@@ -22,7 +23,7 @@ export function ImportPlaylistModal({ parentId = null, onClose }: Props) {
   } = useQuery({
     queryKey: ["spotify-playlists"],
     queryFn: () => api.spotify.myPlaylists(),
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
 
   const { mutate: importPlaylist } = useMutation({
@@ -128,13 +129,14 @@ export function ImportPlaylistModal({ parentId = null, onClose }: Props) {
                 className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors text-left group disabled:opacity-50"
               >
                 {/* サムネイル */}
-                <div className="w-10 h-10 rounded-md shrink-0 overflow-hidden bg-white/10 flex items-center justify-center">
+                <div className="relative w-10 h-10 rounded-md shrink-0 overflow-hidden bg-white/10 flex items-center justify-center">
                   {imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={imageUrl}
                       alt={pl.name}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="40px"
                     />
                   ) : (
                     <Music2 size={16} className="text-foreground/30" />

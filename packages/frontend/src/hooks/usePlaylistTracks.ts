@@ -14,6 +14,6 @@ export function usePlaylistTracks(id: string) {
   return useQuery<TrackWithSource[], Error>({
     queryKey: ["playlist-tracks", id],
     queryFn: () => fetchPlaylistTracks(id),
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 }

@@ -3,14 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import dynamic from "next/dynamic";
 import { PlaylistTree } from "@/components/tree/PlaylistTree";
-import { CreatePlaylistModal } from "@/components/playlist/CreatePlaylistModal";
-import { ImportPlaylistModal } from "@/components/spotify/ImportPlaylistModal";
 import { usePlaylistStore } from "@/stores/playlistStore";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { useUpdatePlaylist } from "@/hooks/usePlaylistMutations";
 import { useSidebar } from "@/hooks/useSidebar";
 import type { Playlist } from "@nestify/shared";
+
+const CreatePlaylistModal = dynamic(() =>
+  import("@/components/playlist/CreatePlaylistModal").then((m) => ({ default: m.CreatePlaylistModal }))
+);
+const ImportPlaylistModal = dynamic(() =>
+  import("@/components/spotify/ImportPlaylistModal").then((m) => ({ default: m.ImportPlaylistModal }))
+);
 
 function findPlaylistById(pls: Playlist[], id: string): Playlist | undefined {
   for (const p of pls) {

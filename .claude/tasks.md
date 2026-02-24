@@ -251,3 +251,10 @@
 - [x] PlaylistsLayoutClient.tsx: モバイルヘッダーのスタイルをサイドバーと統一、drawer にスライドインアニメーション
 - [x] PlaylistDetailView.tsx: カバーアートに box-shadow グロー、ActionButton コンポーネント分離、空状態をアイコン付きに、削除ダイアログのスタイル改善、トラック行のホバー・サムネイル微アニメーション
 - [x] CreatePlaylistModal / AddTrackModal / ImportPlaylistModal: モーダル背景・ボーダーカラーを accent-purple ベースに統一、fade-in-up アニメーション追加
+
+## パフォーマンス最適化（完了）
+- [x] next.config.ts: reactStrictMode / compress / React Compiler(experimental) / avif+webp / Spotify CDN remotePatterns 追加
+- [x] <img> → next/image に全8箇所置き換え（AddTrackModal / ImportPlaylistModal / PlaylistTreeNode / PlaylistDetailView）
+- [x] CreatePlaylistModal / AddTrackModal / ImportPlaylistModal を next/dynamic で遅延ロード（初期バンドル削減）
+- [x] staleTime を 30-60s → 5min に延長（playlists / playlist-tracks / spotify-playlists / prefetch）
+- [x] .claude/skills に nextjs-optimization / react-best-practices を追加

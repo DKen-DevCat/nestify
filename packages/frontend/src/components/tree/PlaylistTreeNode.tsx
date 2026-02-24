@@ -4,6 +4,7 @@ import { ChevronRight, ChevronDown, Music2, GripVertical } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useQueryClient } from "@tanstack/react-query";
+import Image from "next/image";
 import type { Playlist } from "@nestify/shared";
 import { api } from "@/lib/api";
 
@@ -39,7 +40,7 @@ export function PlaylistTreeNode({
         if (!result.ok) throw new Error(result.error);
         return result.data;
       },
-      staleTime: 60_000,
+      staleTime: 5 * 60_000,
     });
   };
 
@@ -133,18 +134,19 @@ export function PlaylistTreeNode({
         </span>
 
         {/* アイコン: Spotify カバー画像があれば表示、なければ絵文字 */}
-        <span className="shrink-0 w-5 h-5 rounded-md overflow-hidden flex items-center justify-center text-sm leading-none">
+        <div className="relative shrink-0 w-5 h-5 rounded-md overflow-hidden flex items-center justify-center text-sm leading-none">
           {playlist.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={playlist.imageUrl}
               alt={playlist.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="20px"
             />
           ) : (
             playlist.icon
           )}
-        </span>
+        </div>
 
         {/* 名前 */}
         <span

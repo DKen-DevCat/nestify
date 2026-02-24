@@ -14,6 +14,6 @@ export function usePlaylistTree() {
   return useQuery<Playlist[], Error>({
     queryKey: ["playlists"],
     queryFn: fetchPlaylistTree,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 }

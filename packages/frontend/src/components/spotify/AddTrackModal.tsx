@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, Search, Plus, Check, Music2, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { api } from "@/lib/api";
 import type { Playlist, SpotifyTrack } from "@nestify/shared";
 
@@ -188,13 +189,14 @@ export function AddTrackModal({ playlistId, playlist, onClose }: Props) {
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 transition-colors group"
                   >
                     {/* アルバムアート */}
-                    <div className="w-9 h-9 rounded shrink-0 overflow-hidden bg-white/5">
+                    <div className="relative w-9 h-9 rounded shrink-0 overflow-hidden bg-white/5">
                       {track.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={track.imageUrl}
                           alt={track.album}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="36px"
                         />
                       ) : (
                         <Music2 size={14} className="m-auto mt-2.5 text-foreground/20" />
