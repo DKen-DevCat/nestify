@@ -289,3 +289,7 @@
 - [x] robots.ts: 同一 user-agent に別ルールを2つ記述していた曖昧な書き方を、単一ルール（allow + disallow）に統合
 - [x] layout.tsx: openGraph.images を明示追加（/opengraph-image への参照）
 - [x] layout.tsx: SITE_URL を NEXT_PUBLIC_SITE_URL 環境変数からの取得に変更（フォールバック付き）
+
+## Codex レビュー対応 — 2026-02-24 18:24:11
+- [x] Issues: none obvious — コード修正不要
+- [x] Suggestion 確認: `Bash(chmod *)` / `Bash(cd * && bun *)` パターンは Nestify 開発フロー（スクリプト権限付与・型チェック）に必要と判断、維持
