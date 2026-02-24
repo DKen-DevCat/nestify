@@ -50,6 +50,7 @@ import {
   useDeletePlaylist,
   useUpdatePlaylist,
 } from "@/hooks/usePlaylistMutations";
+import { usePlayerStore } from "@/stores/playerStore";
 import { api } from "@/lib/api";
 
 const CreatePlaylistModal = dynamic(() =>
@@ -156,6 +157,9 @@ interface SortableTrackItemProps {
 }
 
 function SortableTrackItem({ track, index }: SortableTrackItemProps) {
+  const { playTrack, currentTrack } = usePlayerStore();
+  const isActive = currentTrack?.id === track.track?.id;
+
   const {
     attributes,
     listeners,
@@ -172,10 +176,17 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
     zIndex: isDragging ? 10 : undefined,
   };
 
+  const handlePlay = () => {
+    if (track.track) {
+      playTrack(track.track, track.playlistId);
+    }
+  };
+
   return (
     <li
       ref={setNodeRef}
       style={style}
+      onClick={handlePlay}
       className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 cursor-pointer hover:bg-white/[0.07]"
     >
       <span
@@ -223,7 +234,10 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
           </div>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate text-white/90 group-hover:text-white transition-colors duration-150">
+          <p
+            className="text-sm font-medium truncate transition-colors duration-150"
+            style={{ color: isActive ? "#7c6af7" : undefined }}
+          >
             {track.track?.name ?? track.spotifyTrackId}
           </p>
           <p className="text-xs truncate" style={{ color: "#b3b3b3" }}>
@@ -306,8 +320,20 @@ function DragOverlayTrackItem({ track }: { track: TrackWithSource }) {
 // ---------------------------------------------------------------------------
 
 function SimpleTrackItem({ track, index }: { track: TrackWithSource; index: number }) {
+  const { playTrack, currentTrack } = usePlayerStore();
+  const isActive = currentTrack?.id === track.track?.id;
+
+  const handlePlay = () => {
+    if (track.track) {
+      playTrack(track.track, track.playlistId);
+    }
+  };
+
   return (
-    <li className="group grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-lg items-center hover:bg-white/[0.04] transition-all duration-150">
+    <li
+      onClick={handlePlay}
+      className="group grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-lg items-center cursor-pointer hover:bg-white/[0.04] transition-all duration-150"
+    >
       <span className="w-6 text-center text-foreground/25 text-xs font-[family-name:var(--font-space-mono)] group-hover:text-foreground/40 transition-colors">
         {index + 1}
       </span>
@@ -329,7 +355,10 @@ function SimpleTrackItem({ track, index }: { track: TrackWithSource; index: numb
           )}
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate text-foreground/85 group-hover:text-foreground transition-colors">
+          <p
+            className="text-sm font-medium truncate transition-colors"
+            style={{ color: isActive ? "#7c6af7" : undefined }}
+          >
             {track.track?.name ?? track.spotifyTrackId}
           </p>
           <p className="text-xs text-foreground/40 truncate">

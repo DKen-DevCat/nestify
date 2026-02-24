@@ -326,3 +326,11 @@ Issues: none (no unstaged or staged changes; latest commit only updates `.claude
 Issues: Unstaged changes add `AbortSignal.timeout(10_000)` to Spotify fetches; if the runtime lacks this API or abort errors aren’t handled, calls may now reject unexpectedly. Suggestions: confirm Node runtime support for `AbortSignal.timeout` (or add a fallback) and consider explicit handling/logging of abort errors; decide whether `retry: 1` in `usePlaylistTracks` aligns with desired UX. Positives: timeouts improve resiliency against hung Spotify calls, and reducing retries limits unnecessary load.
 
 > ステータス: 対応完了（abort エラーを `.catch((): null => null)` で Result に変換、retry: 1 は意図的設計として維持）
+
+---
+
+## Codex レビュー — 2026-02-25 00:42:39
+
+Unstaged: none; staged: none. Issues: NowPlayingBar reads playerStore but nothing sets currentTrack, so it will stay on “再生していません” with disabled controls; Suggestions: wire track click/selection to playTrack (and sourcePlaylistId) and add aria-labels to icon-only controls; Positives: cohesive Spotify-style theming and layout refactor with fixed playback bar + sticky headers.
+
+> ステータス: 対応完了（playTrack 接続・アクティブハイライト・aria-label 追加）

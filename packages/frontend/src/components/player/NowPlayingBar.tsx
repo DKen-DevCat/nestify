@@ -57,6 +57,7 @@ export function NowPlayingBar() {
         <div className="flex items-center gap-4">
           <button
             type="button"
+            aria-label="前の曲"
             className="text-foreground/40 hover:text-foreground/80 transition-colors"
             disabled={!currentTrack}
           >
@@ -65,6 +66,7 @@ export function NowPlayingBar() {
 
           <button
             type="button"
+            aria-label={isPlaying ? "一時停止" : "再生"}
             onClick={() => setIsPlaying(!isPlaying)}
             disabled={!currentTrack}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-30"
@@ -82,6 +84,7 @@ export function NowPlayingBar() {
 
           <button
             type="button"
+            aria-label="次の曲"
             className="text-foreground/40 hover:text-foreground/80 transition-colors"
             disabled={!currentTrack}
           >

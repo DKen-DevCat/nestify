@@ -322,6 +322,12 @@
 - [x] Issues: none — コード修正不要
 - [x] Suggestion 確認: `.claude/plan.md` / `.claude/tasks.md` のコミットについては、レビュートレーサビリティのため現在の方針（コミットに含める）を維持
 
+## Codex レビュー対応 — 2026-02-25 00:42:39
+- [x] Issue: NowPlayingBar がトラック選択を受け取れない → SortableTrackItem / SimpleTrackItem に onClick ハンドラを追加し `playTrack(track.track, track.playlistId)` を呼び出す
+- [x] Issue: アクティブ曲のハイライトなし → `currentTrack?.id === track.track?.id` でアクセントカラー（#7c6af7）でトラック名を強調
+- [x] Suggestion: icon-only コントロールに aria-label 追加 → NowPlayingBar の SkipBack / Play・Pause / SkipForward ボタンに `aria-label` を追加
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## UI/UX 全面改善 — Spotify デザインパターン踏襲（完了）
 - [x] globals.css: 背景色 #0a0a14、--foreground #ffffff、--color-surface-hover 追加、グロー強度微調整
 - [x] stores/playerStore.ts: 新規作成（currentTrack / isPlaying / includeChildren / sourcePlaylistId）
