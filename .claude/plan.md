@@ -237,3 +237,13 @@ Positive: No other working tree or staged changes detected.
 Issues: None found; changes are straightforward. Suggestions: In `trigger-codex-review.sh`, you can simplify the commit check by testing `git rev-parse --verify HEAD >/dev/null 2>&1` instead of counting `log` lines, but current logic is OK. Positive findings: Script now correctly reviews the latest commit even when no diffs exist, and tasks.md clearly records Phase 1 completion with detailed checklist.
 
 > ステータス: 対応完了（`rev-parse --verify HEAD` を使う提案を適用してスクリプトを修正）
+
+---
+
+## Codex レビュー — 2026-02-24 16:56:13
+
+Issues: robots.ts uses both disallow "/" and allow "/login" for the same user agent; this can be ambiguous depending on crawler precedence (consider ordering or a single rule with allow/disallow). The new openGraph image and metadata hardcode a deployment URL; confirm this is the canonical production domain to avoid incorrect metadata in other environments.  
+Suggestions: Consider adding `openGraph.images` in layout metadata to explicitly point to `/opengraph-image` (ensures OG image even if auto inference fails); if `/login` is the only public route, add `robots` at app root and keep route-level overrides consistent.  
+Positive: SEO metadata and PWA manifest additions are comprehensive; login page metadata and explicit `noindex` on private areas are clear and consistent.
+
+> ステータス: 対応完了（robots.ts 単一ルール化・OG images 明示・SITE_URL 環境変数化）

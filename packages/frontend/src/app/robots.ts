@@ -5,11 +5,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        disallow: "/",
-      },
-      {
-        userAgent: "*",
         allow: "/login",
+        disallow: "/",
       },
     ],
     sitemap: "https://nestify-frontend-57y3.vercel.app/sitemap.xml",

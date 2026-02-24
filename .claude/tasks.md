@@ -268,3 +268,8 @@
 - [x] manifest.ts: PWA マニフェスト（name / theme_color / background_color / icons）
 - [x] login/page.tsx: index:true + OG metadata を追加（唯一の公開ページ）
 - [x] playlists/layout.tsx: robots noindex を明示
+
+## Codex レビュー対応 — 2026-02-24（完了）
+- [x] robots.ts: 同一 user-agent に別ルールを2つ記述していた曖昧な書き方を、単一ルール（allow + disallow）に統合
+- [x] layout.tsx: openGraph.images を明示追加（/opengraph-image への参照）
+- [x] layout.tsx: SITE_URL を NEXT_PUBLIC_SITE_URL 環境変数からの取得に変更（フォールバック付き）

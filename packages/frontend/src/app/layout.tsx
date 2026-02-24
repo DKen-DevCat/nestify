@@ -14,7 +14,8 @@ const spaceMono = Space_Mono({
   weight: ["400", "700"],
 });
 
-const SITE_URL = "https://nestify-frontend-57y3.vercel.app";
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://nestify-frontend-57y3.vercel.app";
 const SITE_DESCRIPTION =
   "Spotify のプレイリストをフォルダのように無限にネストして管理。子孫プレイリストを含めたシャッフル再生にも対応。";
 
@@ -34,6 +35,7 @@ export const metadata: Metadata = {
     siteName: "Nestify",
     locale: "ja_JP",
     type: "website",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
