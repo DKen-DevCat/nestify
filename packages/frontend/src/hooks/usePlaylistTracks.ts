@@ -15,5 +15,6 @@ export function usePlaylistTracks(id: string) {
     queryKey: ["playlist-tracks", id],
     queryFn: () => fetchPlaylistTracks(id),
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 }

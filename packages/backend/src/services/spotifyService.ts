@@ -60,8 +60,12 @@ export async function refreshAccessToken(
       grant_type: "refresh_token",
       refresh_token: refreshToken,
     }),
-  });
+    signal: AbortSignal.timeout(10_000),
+  }).catch((): null => null);
 
+  if (!res) {
+    return { ok: false, error: "Spotify token refresh timed out", status: 504 };
+  }
   if (!res.ok) {
     return { ok: false, error: "Failed to refresh Spotify token", status: 500 };
   }
@@ -143,8 +147,12 @@ export async function searchTracks(
 
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
-  });
+    signal: AbortSignal.timeout(10_000),
+  }).catch((): null => null);
 
+  if (!res) {
+    return { ok: false, error: "Spotify search request timed out", status: 504 };
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     return {
@@ -243,9 +251,9 @@ export async function enrichTracksWithSpotifyData(
     const chunk = ids.slice(i, i + CHUNK);
     const res = await fetch(
       `https://api.spotify.com/v1/tracks?ids=${chunk.join(",")}&market=JP`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    if (!res.ok) continue;
+      { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(10_000) },
+    ).catch((): null => null);
+    if (!res || !res.ok) continue;
 
     const data = (await res.json()) as { tracks: Array<{
       id: string;

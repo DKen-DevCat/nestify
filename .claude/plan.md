@@ -318,3 +318,11 @@ Latest commit only updates `.claude/plan.md` and `.claude/tasks.md` with review 
 Issues: none (no unstaged or staged changes; latest commit only updates `.claude/plan.md` and `.claude/tasks.md`). Suggestions: confirm committing `.claude` review logs each time is intentional to avoid history noise. Positives: review trail and rationale are clearly documented.
 
 > ステータス: 対応完了（Issues なし）
+
+---
+
+## Codex レビュー — 2026-02-25 00:11:56
+
+Issues: Unstaged changes add `AbortSignal.timeout(10_000)` to Spotify fetches; if the runtime lacks this API or abort errors aren’t handled, calls may now reject unexpectedly. Suggestions: confirm Node runtime support for `AbortSignal.timeout` (or add a fallback) and consider explicit handling/logging of abort errors; decide whether `retry: 1` in `usePlaylistTracks` aligns with desired UX. Positives: timeouts improve resiliency against hung Spotify calls, and reducing retries limits unnecessary load.
+
+> ステータス: 対応完了（abort エラーを `.catch((): null => null)` で Result に変換、retry: 1 は意図的設計として維持）

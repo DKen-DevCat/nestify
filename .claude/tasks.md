@@ -321,3 +321,12 @@
 ## Codex レビュー対応 — 2026-02-24 23:56:06
 - [x] Issues: none — コード修正不要
 - [x] Suggestion 確認: `.claude/plan.md` / `.claude/tasks.md` のコミットについては、レビュートレーサビリティのため現在の方針（コミットに含める）を維持
+
+## Codex レビュー対応 — 2026-02-25 00:11:56
+- [x] Issue: `AbortSignal.timeout` がタイムアウトした場合の abort エラーが未処理 → `.catch((): null => null)` で null に変換し `Result` として返すよう修正
+  - `refreshAccessToken`: タイムアウト時に `{ ok: false, error: "...", status: 504 }` を返す
+  - `searchTracks`: タイムアウト時に `{ ok: false, error: "...", status: 504 }` を返す
+  - `enrichTracksWithSpotifyData`: タイムアウト時にそのチャンクをスキップ（`continue`）
+- [x] Suggestion: `AbortSignal.timeout` の Bun ランタイムサポート確認 — Bun は Web APIs 準拠のため対応済み
+- [x] Suggestion: `retry: 1` の UX 妥当性確認 — 10s タイムアウト × 3 retry = 最大 30 秒待ちを避けるための意図的な設計。維持。
+- [x] tsc --noEmit でバックエンドエラーなし確認
