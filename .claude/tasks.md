@@ -269,6 +269,12 @@
 - [x] login/page.tsx: index:true + OG metadata を追加（唯一の公開ページ）
 - [x] playlists/layout.tsx: robots noindex を明示
 
+## permissions 修正（完了）
+- [x] Bash(:* → *) 全パターンを非推奨の `:*` から推奨の ` *` に変更
+- [x] `Edit` / `Write` を allow に追加（ファイル編集の都度承認を解消）
+- [x] `Bash(cd * && ~/.bun/bin/bun *)` / `Bash(cd * && bun *)` を追加（型チェックコマンドをカバー）
+- [x] settings.local.json.example を permissions 含む完全な例に更新
+
 ## Codex レビュー自動対応（完了）
 - [x] trigger-codex-review.sh: Codex レビュー後に claude --dangerously-skip-permissions -p で自動対応を起動
 - [x] .auto-review-lock ファイルで Stop フックの再帰呼び出しを防止（1段階のみ）

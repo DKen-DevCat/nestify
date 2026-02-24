@@ -1,4 +1,36 @@
 {
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(~/.bun/bin/bun *)",
+      "Bash(bun *)",
+      "Bash(npm *)",
+      "Bash(node *)",
+      "Bash(find *)",
+      "Bash(mkdir *)",
+      "Bash(cp *)",
+      "Bash(chmod *)",
+      "Bash(echo *)",
+      "Bash(which *)",
+      "Bash(cd * && ~/.bun/bin/bun *)",
+      "Bash(cd * && bun *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/secrets/**)",
+      "Bash(rm -rf *)",
+      "Bash(sudo *)"
+    ],
+    "ask": ["Bash(git push *)", "Bash(curl *)"]
+  },
   "hooks": {
     "Stop": [
       {
