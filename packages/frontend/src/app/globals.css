@@ -2,17 +2,18 @@
 
 /* Nestify: ダークテーマ固定 */
 :root {
-  --background: #07070f;
-  --foreground: #e8e6f0;
+  --background: #0a0a14;
+  --foreground: #ffffff;
 
   /* アクセントカラー */
   --color-accent-purple: #7c6af7;
   --color-accent-pink: #f76a8a;
   --color-accent-green: #6af7c8;
 
-  /* サーフェス */
-  --color-surface: #0e0d1a;
-  --color-surface-2: #131224;
+  /* サーフェス（Spotify #181818/#232323 の深紫版） */
+  --color-surface: #111119;
+  --color-surface-2: #1a1a25;
+  --color-surface-hover: #232330;
 }
 
 @theme inline {
@@ -27,6 +28,7 @@
   --color-accent-green: var(--color-accent-green);
   --color-surface: var(--color-surface);
   --color-surface-2: var(--color-surface-2);
+  --color-surface-hover: var(--color-surface-hover);
 }
 
 body {
@@ -41,9 +43,9 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 70% 50% at 10% 5%, rgba(124, 106, 247, 0.10) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 40% at 90% 95%, rgba(247, 106, 138, 0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 30% 30% at 80% 20%, rgba(106, 247, 200, 0.04) 0%, transparent 50%);
+    radial-gradient(ellipse 70% 50% at 10% 5%, rgba(124, 106, 247, 0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 90% 95%, rgba(247, 106, 138, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 30% at 80% 20%, rgba(106, 247, 200, 0.03) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }

@@ -84,20 +84,19 @@ export function PlaylistTreeNode({
 
       <div
         className={[
-          "group relative flex items-center gap-1 py-1.5 rounded-lg cursor-pointer",
+          "group relative flex items-center gap-1 py-2 rounded-lg cursor-pointer",
           "transition-all duration-150",
           isSelected
             ? "text-white"
-            : "hover:bg-white/[0.04] text-foreground/70 hover:text-foreground/90",
+            : "hover:bg-white/[0.07] text-white/60 hover:text-white/90",
           isDragging ? "ring-1 ring-accent-purple/40" : "",
           dragOverZone === "inside" ? "ring-1 ring-accent-purple/50 bg-accent-purple/8" : "",
         ].join(" ")}
         style={{
           paddingLeft: `${depth * 12 + 8}px`,
           paddingRight: "8px",
-          // 選択状態: 左アクセントバー + 微妙なグラデーション背景
           ...(isSelected && {
-            background: "linear-gradient(90deg, rgba(124,106,247,0.15) 0%, rgba(124,106,247,0.05) 100%)",
+            background: "linear-gradient(90deg, rgba(124,106,247,0.22) 0%, rgba(124,106,247,0.08) 100%)",
             boxShadow: "inset 2px 0 0 #7c6af7",
           }),
         }}
@@ -134,14 +133,14 @@ export function PlaylistTreeNode({
         </span>
 
         {/* アイコン: Spotify カバー画像があれば表示、なければ絵文字 */}
-        <div className="relative shrink-0 w-5 h-5 rounded-md overflow-hidden flex items-center justify-center text-sm leading-none">
+        <div className="relative shrink-0 w-8 h-8 rounded-md overflow-hidden flex items-center justify-center text-lg leading-none bg-white/5">
           {playlist.imageUrl ? (
             <Image
               src={playlist.imageUrl}
               alt={playlist.name}
               fill
               className="object-cover"
-              sizes="20px"
+              sizes="32px"
             />
           ) : (
             playlist.icon
@@ -151,8 +150,8 @@ export function PlaylistTreeNode({
         {/* 名前 */}
         <span
           className={[
-            "truncate text-sm font-medium flex-1 transition-colors",
-            isSelected ? "text-accent-purple" : "",
+            "truncate text-sm font-medium flex-1 transition-colors duration-150",
+            isSelected ? "text-white" : "",
           ].join(" ")}
         >
           {playlist.name}
@@ -161,10 +160,8 @@ export function PlaylistTreeNode({
         {/* トラック数 */}
         {playlist.trackCount !== undefined && playlist.trackCount > 0 && (
           <span
-            className={[
-              "ml-auto shrink-0 text-xs font-[family-name:var(--font-space-mono)] transition-colors",
-              isSelected ? "text-accent-purple/50" : "text-foreground/25",
-            ].join(" ")}
+            className="ml-auto shrink-0 text-xs font-[family-name:var(--font-space-mono)] transition-colors duration-150"
+            style={{ color: isSelected ? "rgba(124,106,247,0.6)" : "rgba(255,255,255,0.25)" }}
           >
             {playlist.trackCount}
           </span>

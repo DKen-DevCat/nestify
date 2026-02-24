@@ -96,10 +96,10 @@ export function PlaylistSidebar({ onNavigate }: PlaylistSidebarProps) {
         <button
           type="button"
           onClick={toggle}
-          title="サイドバーを展開"
-          className="hidden md:flex items-center justify-center w-6 shrink-0 border-r border-white/8 hover:bg-white/[0.03] text-foreground/30 hover:text-accent-purple transition-colors"
+          title="ライブラリを展開"
+          className="hidden md:flex flex-col items-center justify-start gap-1 w-10 pt-4 shrink-0 border-r border-white/6 hover:bg-white/[0.04] text-white/30 hover:text-white/60 transition-colors duration-150"
         >
-          <ChevronRight size={13} />
+          <ChevronRight size={14} />
         </button>
       )}
 
@@ -109,46 +109,50 @@ export function PlaylistSidebar({ onNavigate }: PlaylistSidebarProps) {
       >
         {/* ヘッダー */}
         <div
-          className="flex items-center justify-between px-4 py-3.5 min-w-0"
-          style={{
-            borderBottom: "1px solid rgba(124,106,247,0.12)",
-            background: "linear-gradient(180deg, rgba(124,106,247,0.06) 0%, transparent 100%)",
-          }}
+          className="flex items-center justify-between px-3 py-3 min-w-0"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
-          <h1 className="font-[family-name:var(--font-syne)] font-bold text-base truncate text-gradient">
-            Nestify
-          </h1>
+          <div className="flex items-center gap-2">
+            <span className="font-[family-name:var(--font-syne)] font-bold text-sm text-white/80">
+              マイライブラリ
+            </span>
+          </div>
           <div className="flex items-center gap-0.5 shrink-0">
             <button
               type="button"
               title="Spotify からインポート"
               onClick={() => setIsImporting(true)}
-              className="p-1.5 rounded-md hover:bg-white/8 text-foreground/35 hover:text-foreground/70 transition-colors"
+              className="p-1.5 rounded-md hover:bg-white/8 text-white/35 hover:text-white/70 transition-colors duration-150"
             >
-              <Download size={15} />
+              <Download size={14} />
             </button>
             <button
               type="button"
               title="新しいプレイリストを作成"
               onClick={() => setIsCreating(true)}
-              className="p-1.5 rounded-md hover:bg-white/8 text-foreground/35 hover:text-foreground/70 transition-colors"
+              className="p-1.5 rounded-md hover:bg-white/8 text-white/35 hover:text-white/70 transition-colors duration-150"
             >
-              <Plus size={15} />
+              <Plus size={14} />
             </button>
-            {/* 折りたたみボタン（デスクトップのみ） */}
             <button
               type="button"
               title="サイドバーを折りたたむ"
               onClick={toggle}
-              className="hidden md:flex p-1.5 rounded-md hover:bg-white/8 text-foreground/35 hover:text-foreground/70 transition-colors"
+              className="hidden md:flex p-1.5 rounded-md hover:bg-white/8 text-white/35 hover:text-white/70 transition-colors duration-150"
             >
-              <ChevronLeft size={15} />
+              <ChevronLeft size={14} />
             </button>
           </div>
         </div>
 
         {/* ツリー */}
         <div className="flex-1 overflow-y-auto p-2">
+          {/* セクションラベル */}
+          <div className="px-2 pt-2 pb-1">
+            <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>
+              プレイリスト
+            </span>
+          </div>
           {isLoading && (
             <div className="flex items-center justify-center py-10">
               <div className="w-5 h-5 border-2 border-accent-purple/60 border-t-transparent rounded-full animate-spin" />

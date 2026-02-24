@@ -40,6 +40,7 @@ import {
   ChevronDown,
   ChevronRight,
   Pencil,
+  Play,
 } from "lucide-react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -175,7 +176,7 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
     <li
       ref={setNodeRef}
       style={style}
-      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 cursor-pointer hover:bg-white/[0.04]"
+      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 cursor-pointer hover:bg-white/[0.07]"
     >
       <span
         className="flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
@@ -186,8 +187,16 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
         <GripVertical size={12} />
       </span>
 
-      <span className="w-6 text-center text-foreground/25 text-xs font-[family-name:var(--font-space-mono)] group-hover:text-foreground/40 transition-colors">
-        {index + 1}
+      {/* 番号 / 再生アイコン切り替え */}
+      <span className="relative w-6 h-6 flex items-center justify-center">
+        <span className="text-xs font-[family-name:var(--font-space-mono)] group-hover:opacity-0 transition-opacity duration-150 absolute inset-0 flex items-center justify-center" style={{ color: "#b3b3b3" }}>
+          {index + 1}
+        </span>
+        <Play
+          size={13}
+          fill="currentColor"
+          className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute inset-0 m-auto"
+        />
       </span>
 
       <div className="flex items-center gap-3 min-w-0">
@@ -208,26 +217,30 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
               <Music2 size={12} className="text-foreground/20" />
             </div>
           )}
+          {/* ホバーオーバーレイ */}
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center">
+            <Play size={12} fill="white" className="text-white translate-x-px" />
+          </div>
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium truncate text-foreground/90 group-hover:text-foreground transition-colors">
+          <p className="text-sm font-medium truncate text-white/90 group-hover:text-white transition-colors duration-150">
             {track.track?.name ?? track.spotifyTrackId}
           </p>
-          <p className="text-xs text-foreground/40 truncate">
+          <p className="text-xs truncate" style={{ color: "#b3b3b3" }}>
             {track.track?.artists.join(", ")}
           </p>
         </div>
       </div>
 
-      <span className="text-foreground/35 text-xs truncate">
+      <span className="text-xs truncate" style={{ color: "#b3b3b3" }}>
         {track.track?.album ?? "--"}
       </span>
 
-      <span className="text-foreground/25 text-xs font-[family-name:var(--font-space-mono)]">
+      <span className="text-xs font-[family-name:var(--font-space-mono)]" style={{ color: "#b3b3b3" }}>
         {formatDate(track.addedAt)}
       </span>
 
-      <span className="text-foreground/25 text-xs font-[family-name:var(--font-space-mono)]">
+      <span className="text-xs font-[family-name:var(--font-space-mono)]" style={{ color: "#b3b3b3" }}>
         {track.track ? formatDuration(track.track.durationMs) : "--:--"}
       </span>
     </li>
@@ -771,8 +784,13 @@ export function PlaylistDetailView({ id }: Props) {
   const hasContent =
     Object.values(displayContainerItems).some((items) => items.length > 0);
 
-  // カバーカラーからグロー色を抽出（グラデーションはそのまま使う）
   const coverColor = playlist?.color ?? "linear-gradient(135deg,#7c6af7,#f76a8a)";
+
+  // グラデーション文字列から最初の hex カラーを抽出してヒーロー背景色に使用
+  const heroBaseColor = (() => {
+    const match = coverColor.match(/#[0-9a-f]{6}/i);
+    return match ? match[0] : "#7c6af7";
+  })();
 
   return (
     <DetailDndCtx.Provider value={dndCtxValue}>
@@ -783,144 +801,161 @@ export function PlaylistDetailView({ id }: Props) {
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveTrack(null)}
       >
-        <div className="space-y-6 animate-fade-in">
-          {/* ヘッダー */}
-          <div className="flex items-start gap-5">
-            {/* カバーアート */}
-            <div
-              className="relative w-24 h-24 rounded-2xl shrink-0 overflow-hidden"
-              style={{
-                background: playlist?.imageUrl ? undefined : coverColor,
-                boxShadow: playlist?.imageUrl
-                  ? "0 8px 30px rgba(0,0,0,0.5)"
-                  : "0 8px 30px rgba(124,106,247,0.3), 0 0 0 1px rgba(255,255,255,0.08)",
-              }}
-            >
-              {playlist?.imageUrl ? (
-                <Image
-                  src={playlist.imageUrl}
-                  alt={playlist.name}
-                  fill
-                  className="object-cover"
-                  sizes="96px"
-                  priority
-                />
-              ) : (
-                <span className="w-full h-full flex items-center justify-center text-4xl">
-                  {playlist?.icon ?? "🎵"}
-                </span>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              {/* プレイリスト名（クリックでインライン編集） */}
-              {isRenaming ? (
-                <input
-                  ref={renameInputRef}
-                  type="text"
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onBlur={handleRenameSubmit}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleRenameSubmit();
-                    if (e.key === "Escape") setIsRenaming(false);
-                  }}
-                  className="font-[family-name:var(--font-syne)] text-2xl font-bold bg-transparent border-b border-accent-purple/50 outline-none w-full text-foreground"
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={startRenaming}
-                  title="クリックして名前を変更"
-                  className="group flex items-center gap-2 text-left w-full"
-                >
-                  <h1 className="font-[family-name:var(--font-syne)] text-2xl font-bold truncate text-foreground/95">
-                    {playlist?.name ?? "プレイリスト"}
-                  </h1>
-                  <Pencil
-                    size={13}
-                    className="text-foreground/15 group-hover:text-foreground/40 transition-colors shrink-0"
+        <div className="space-y-0 animate-fade-in">
+          {/* ─── ヒーローヘッダー ─── */}
+          <div
+            className="-mx-4 md:-mx-8 px-4 md:px-8 pt-8 pb-6"
+            style={{
+              background: `linear-gradient(180deg, ${heroBaseColor}33 0%, ${heroBaseColor}11 50%, transparent 100%)`,
+            }}
+          >
+            <div className="flex items-end gap-6">
+              {/* カバーアート（大型化） */}
+              <div
+                className="relative w-40 h-40 md:w-48 md:h-48 rounded-xl shrink-0 overflow-hidden"
+                style={{
+                  background: playlist?.imageUrl ? undefined : coverColor,
+                  boxShadow: "0 16px 48px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4)",
+                }}
+              >
+                {playlist?.imageUrl ? (
+                  <Image
+                    src={playlist.imageUrl}
+                    alt={playlist.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 160px, 192px"
+                    priority
                   />
-                </button>
-              )}
+                ) : (
+                  <span className="w-full h-full flex items-center justify-center text-6xl">
+                    {playlist?.icon ?? "🎵"}
+                  </span>
+                )}
+              </div>
 
-              <p className="text-foreground/35 text-xs mt-1 font-[family-name:var(--font-space-mono)] tracking-wide">
-                {tracks?.length ?? 0} 曲
-              </p>
+              {/* テキスト情報（下揃え） */}
+              <div className="min-w-0 flex-1 pb-2">
+                <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: "#b3b3b3" }}>
+                  プレイリスト
+                </p>
 
-              {/* アクションボタン */}
-              <div className="flex items-center gap-2 mt-4 flex-wrap">
-                <ActionButton
-                  icon={<Plus size={14} />}
-                  label="サブPL"
-                  onClick={() => setIsAddingChild(true)}
-                />
-                <ActionButton
-                  icon={<ListPlus size={14} />}
-                  label="曲を追加"
-                  onClick={() => setIsAddingTrack(true)}
-                />
-                <ActionButton
-                  icon={
-                    isExporting ? (
-                      <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Upload size={14} />
-                    )
-                  }
-                  label="Spotify へ書き出し"
-                  onClick={() => exportPlaylist()}
-                  disabled={isExporting}
-                />
-                {/* Spotify で開くボタン */}
-                {exportedUrls[id] ? (
-                  <a
-                    href={exportedUrls[id].url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 hover:scale-[1.02]"
-                    style={{
-                      border: "1px solid rgba(106,247,200,0.3)",
-                      color: "#6af7c8",
-                      background: "rgba(106,247,200,0.06)",
+                {isRenaming ? (
+                  <input
+                    ref={renameInputRef}
+                    type="text"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onBlur={handleRenameSubmit}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleRenameSubmit();
+                      if (e.key === "Escape") setIsRenaming(false);
                     }}
-                  >
-                    <ExternalLink size={13} />
-                    Spotify で開く
-                  </a>
+                    className="font-[family-name:var(--font-syne)] text-4xl md:text-5xl font-bold bg-transparent border-b border-accent-purple/50 outline-none w-full text-white"
+                  />
                 ) : (
                   <button
                     type="button"
-                    disabled
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-white/8 text-foreground/20 cursor-not-allowed"
+                    onClick={startRenaming}
+                    title="クリックして名前を変更"
+                    className="group flex items-center gap-2 text-left w-full"
                   >
-                    <ExternalLink size={13} />
-                    Spotify で開く
+                    <h1 className="font-[family-name:var(--font-syne)] text-4xl md:text-5xl font-bold text-white leading-tight">
+                      {playlist?.name ?? "プレイリスト"}
+                    </h1>
+                    <Pencil
+                      size={14}
+                      className="text-white/15 group-hover:text-white/40 transition-colors shrink-0 mt-1"
+                    />
                   </button>
                 )}
 
-                <button
-                  type="button"
-                  onClick={() => setConfirmDelete(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs text-foreground/25 hover:text-accent-pink hover:bg-accent-pink/8 transition-all ml-auto"
-                >
-                  <Trash2 size={13} />
-                </button>
+                <p className="text-sm mt-3 font-[family-name:var(--font-space-mono)]" style={{ color: "#b3b3b3" }}>
+                  {tracks?.length ?? 0} 曲
+                </p>
               </div>
             </div>
+          </div>
+
+          {/* ─── アクションバー ─── */}
+          <div className="flex items-center gap-3 pt-6 pb-2 flex-wrap">
+            {/* メイン再生ボタン */}
+            <button
+              type="button"
+              onClick={() => setIsAddingTrack(true)}
+              className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95"
+              style={{ background: "#7c6af7" }}
+              title="曲を追加"
+            >
+              <ListPlus size={20} className="text-white" />
+            </button>
+
+            <ActionButton
+              icon={<Plus size={14} />}
+              label="サブPL"
+              onClick={() => setIsAddingChild(true)}
+            />
+            <ActionButton
+              icon={
+                isExporting ? (
+                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Upload size={14} />
+                )
+              }
+              label="Spotify へ書き出し"
+              onClick={() => exportPlaylist()}
+              disabled={isExporting}
+            />
+            {exportedUrls[id] ? (
+              <a
+                href={exportedUrls[id].url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 hover:scale-[1.02]"
+                style={{
+                  border: "1px solid rgba(106,247,200,0.3)",
+                  color: "#6af7c8",
+                  background: "rgba(106,247,200,0.06)",
+                }}
+              >
+                <ExternalLink size={13} />
+                Spotify で開く
+              </a>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border border-white/8 text-white/20 cursor-not-allowed"
+              >
+                <ExternalLink size={13} />
+                Spotify で開く
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs text-white/25 hover:text-accent-pink hover:bg-accent-pink/8 transition-all ml-auto"
+            >
+              <Trash2 size={13} />
+            </button>
           </div>
 
           {/* ─── コンテンツリスト ─── */}
           {hasContent ? (
             <div>
-              {/* カラムヘッダー（直接トラックがある場合のみ表示） */}
+              {/* カラムヘッダー（直接トラックがある場合のみ表示、sticky） */}
               {(displayContainerItems[id] ?? []).some((m) => m.kind === "track") && (
                 <div
-                  className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 text-xs mb-1"
+                  className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 mb-1 sticky top-0 z-10"
                   style={{
-                    borderBottom: "1px solid rgba(255,255,255,0.05)",
-                    color: "rgba(232,230,240,0.25)",
-                    letterSpacing: "0.06em",
+                    borderBottom: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(10,10,20,0.92)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    color: "#b3b3b3",
+                    letterSpacing: "0.08em",
                     textTransform: "uppercase",
                     fontFamily: "var(--font-space-mono)",
                     fontSize: "10px",
@@ -943,23 +978,35 @@ export function PlaylistDetailView({ id }: Props) {
               />
             </div>
           ) : (
-            <div className="text-center py-16">
-              <div className="inline-flex flex-col items-center gap-3">
+            <div className="text-center py-24">
+              <div className="inline-flex flex-col items-center gap-4">
                 <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
                   style={{
                     background: "rgba(124,106,247,0.08)",
                     border: "1px solid rgba(124,106,247,0.15)",
                   }}
                 >
-                  <Music2 size={20} className="text-accent-purple/40" />
+                  <Music2 size={28} className="text-accent-purple/40" />
                 </div>
                 <div>
-                  <p className="text-foreground/30 text-sm">曲がありません</p>
-                  <p className="text-foreground/18 text-xs mt-1">
-                    「曲を追加」から Spotify の楽曲を追加できます
+                  <p className="text-white/50 text-base font-medium">このプレイリストは空です</p>
+                  <p className="text-white/30 text-sm mt-1">
+                    「曲を追加」から楽曲を追加するか、サブプレイリストを作成してください
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingTrack(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors duration-150"
+                  style={{
+                    border: "1px solid rgba(124,106,247,0.3)",
+                    color: "#7c6af7",
+                  }}
+                >
+                  <Plus size={14} />
+                  曲を追加
+                </button>
               </div>
             </div>
           )}

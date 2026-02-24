@@ -322,6 +322,15 @@
 - [x] Issues: none — コード修正不要
 - [x] Suggestion 確認: `.claude/plan.md` / `.claude/tasks.md` のコミットについては、レビュートレーサビリティのため現在の方針（コミットに含める）を維持
 
+## UI/UX 全面改善 — Spotify デザインパターン踏襲（完了）
+- [x] globals.css: 背景色 #0a0a14、--foreground #ffffff、--color-surface-hover 追加、グロー強度微調整
+- [x] stores/playerStore.ts: 新規作成（currentTrack / isPlaying / includeChildren / sourcePlaylistId）
+- [x] components/player/NowPlayingBar.tsx: 新規作成（Spotify 風 72px ボトムバー、3カラム構成）
+- [x] PlaylistsLayoutClient.tsx: h-screen / overflow-hidden レイアウト、NowPlayingBar 下部固定追加
+- [x] PlaylistDetailView.tsx: ヒーローヘッダー大型化（192px カバーアート + グラデーション背景）、アクションバー大型円形ボタン、sticky トラックヘッダー、番号→再生アイコン hover、アルバムアートオーバーレイ、空状態改善
+- [x] PlaylistTreeNode.tsx: アイコン 32px、ホバー白/7%、選択テキスト white、行高さ py-2
+- [x] PlaylistSidebar.tsx: 「マイライブラリ」ヘッダー、「プレイリスト」セクションラベル、閉じ時ボタン w-10
+
 ## Codex レビュー対応 — 2026-02-25 00:11:56
 - [x] Issue: `AbortSignal.timeout` がタイムアウトした場合の abort エラーが未処理 → `.catch((): null => null)` で null に変換し `Result` として返すよう修正
   - `refreshAccessToken`: タイムアウト時に `{ ok: false, error: "...", status: 504 }` を返す

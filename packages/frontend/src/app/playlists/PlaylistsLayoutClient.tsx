@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { PlaylistSidebar } from "./PlaylistSidebar";
+import { NowPlayingBar } from "@/components/player/NowPlayingBar";
 
 export function PlaylistsLayoutClient({
   children,
@@ -12,13 +13,13 @@ export function PlaylistsLayoutClient({
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="flex flex-col h-screen overflow-hidden bg-background text-foreground">
       {/* モバイルヘッダー（md 未満のみ表示） */}
       <div
-        className="flex items-center px-4 py-3 md:hidden"
+        className="flex items-center px-4 py-3 md:hidden shrink-0"
         style={{
-          borderBottom: "1px solid rgba(124,106,247,0.12)",
-          background: "linear-gradient(180deg, rgba(124,106,247,0.06) 0%, transparent 100%)",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "var(--color-surface)",
         }}
       >
         <button
@@ -34,7 +35,7 @@ export function PlaylistsLayoutClient({
         </span>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden min-h-0">
         {/* デスクトップ: 通常サイドバー（開閉・リサイズ付き） */}
         <div className="hidden md:flex">
           <PlaylistSidebar />
@@ -43,22 +44,25 @@ export function PlaylistsLayoutClient({
         {/* モバイル: overlay drawer */}
         {isMobileOpen && (
           <>
-            {/* backdrop */}
             <div
               className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm md:hidden"
               onClick={() => setIsMobileOpen(false)}
             />
-            {/* drawer 本体 */}
             <div className="fixed inset-y-0 left-0 z-50 flex md:hidden animate-slide-in-left">
               <PlaylistSidebar onNavigate={() => setIsMobileOpen(false)} />
             </div>
           </>
         )}
 
-        <main className="relative z-[1] flex-1 overflow-y-auto p-4 md:p-8">
-          {children}
+        <main className="relative z-[1] flex-1 overflow-y-auto">
+          <div className="px-4 md:px-8 py-6">
+            {children}
+          </div>
         </main>
       </div>
+
+      {/* 下部固定の再生バー */}
+      <NowPlayingBar />
     </div>
   );
 }
