@@ -383,6 +383,12 @@
 - [x] Issues: none found — コード修正不要
 - [x] Suggestion 確認: icon-only ボタンへの `aria-label` 追加は任意のアクセシビリティ改善。優先度低のため今回は対応見送り
 
+## バグ修正: 全曲追加で1,2曲しか追加できない（完了）
+- [x] 原因: Promise.allSettled による並列リクエストで MAX(order) が競合し大半の INSERT が失敗
+- [x] 修正: handleAddAll を for...of ループの直列実行に変更
+- [x] Codex レビュー対応: 各曲に try/catch を追加しネットワークエラー時も setIsAddingAll(false) を保証
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## Codex レビュー対応 — 2026-02-25 14:34:07 / 14:34:59
 - [x] Issue: stray `2m` → アルバム検索実装時の全面書き換えで解消済み
 - [x] Suggestion: search input に aria-label="曲・アルバムを検索" を追加

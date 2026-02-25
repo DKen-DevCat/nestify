@@ -159,19 +159,23 @@ export function InlineTrackSearch({ playlistId, playlist }: Props) {
     setAddError(null);
 
     const toAdd = albumDetail.tracks.filter((t) => !addedIds.has(t.id));
-    const results = await Promise.allSettled(
-      toAdd.map((t) => api.playlists.addTrack(targetPlaylistId, t.id, t)),
-    );
-
     const newIds = new Set(addedIds);
     let failed = 0;
-    results.forEach((r, i) => {
-      if (r.status === "fulfilled" && r.value.ok) {
-        newIds.add(toAdd[i].id);
-      } else {
+
+    // MAX(order) の競合を避けるため直列で追加する
+    // per-item try/catch でネットワークエラー時もループを継続し setIsAddingAll(false) を保証する
+    for (const t of toAdd) {
+      try {
+        const res = await api.playlists.addTrack(targetPlaylistId, t.id, t);
+        if (res.ok) {
+          newIds.add(t.id);
+        } else {
+          failed++;
+        }
+      } catch {
         failed++;
       }
-    });
+    }
 
     setAddedIds(newIds);
     setIsAddingAll(false);

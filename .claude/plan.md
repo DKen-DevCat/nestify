@@ -415,3 +415,11 @@ Unstaged: none. Staged: none. Latest commit only updates `.claude/plan.md` and `
 Issues: none. Suggestions: confirm `.claude` review logs are intended to be versioned (commit indicates yes). Positives: records review status and notes clearly.
 
 > ステータス: 対応完了（Issues なし）
+
+---
+
+## Codex レビュー — 2026-02-25 15:44:46
+
+Issues: In InlineTrackSearch handleAddAll, replacing Promise.allSettled with sequential awaits means a thrown fetch/network error will abort the loop and skip state cleanup (e.g., setIsAddingAll(false)), potentially leaving the UI stuck; add per-item try/catch to preserve prior resilience. Suggestions: sequential adds may be slow for large albums; consider lightweight progress feedback or a server-side ordered insert to keep UX responsive. Positives: serialization avoids the MAX(order) race; no staged changes; latest commit only updates .claude review logs.
+
+> ステータス: 対応済み — for...of ループの各曲に try/catch を追加し、ネットワークエラー時も setIsAddingAll(false) を保証
