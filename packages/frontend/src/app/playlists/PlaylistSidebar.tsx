@@ -9,6 +9,7 @@ import { usePlaylistStore } from "@/stores/playlistStore";
 import { usePlaylistTree } from "@/hooks/usePlaylistTree";
 import { useUpdatePlaylist } from "@/hooks/usePlaylistMutations";
 import { useSidebar } from "@/hooks/useSidebar";
+import { Skeleton } from "@/components/ui/Skeleton";
 import type { Playlist } from "@nestify/shared";
 
 const CreatePlaylistModal = dynamic(() =>
@@ -154,8 +155,35 @@ export function PlaylistSidebar({ onNavigate }: PlaylistSidebarProps) {
             </span>
           </div>
           {isLoading && (
-            <div className="flex items-center justify-center py-10">
-              <div className="w-5 h-5 border-2 border-accent-purple/60 border-t-transparent rounded-full animate-spin" />
+            // 実ノードと同一の構造・寸法でスケルトンを描画しレイアウトシフトを防ぐ
+            <div>
+              {(
+                [
+                  { w: "w-28", count: true },
+                  { w: "w-36", count: false },
+                  { w: "w-20", count: true },
+                  { w: "w-32", count: false },
+                  { w: "w-24", count: true },
+                  { w: "w-28", count: false },
+                ] as const
+              ).map(({ w, count }, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-1 py-2 rounded-lg"
+                  style={{ paddingLeft: "8px", paddingRight: "8px" }}
+                >
+                  {/* ドラッグハンドルのスペーサー（w-4） */}
+                  <span className="shrink-0 w-4" />
+                  {/* シェブロンのスペーサー（w-4） */}
+                  <span className="shrink-0 w-4" />
+                  {/* アイコン：実コンテンツと同サイズ w-8 h-8 */}
+                  <Skeleton className="w-8 h-8 rounded-md shrink-0" />
+                  {/* プレイリスト名 */}
+                  <Skeleton className={`h-3.5 ${w} flex-1 ml-1`} />
+                  {/* トラック数バッジ（任意） */}
+                  {count && <Skeleton className="h-3 w-5 shrink-0" />}
+                </div>
+              ))}
             </div>
           )}
 

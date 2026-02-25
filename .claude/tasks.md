@@ -337,6 +337,13 @@
 - [x] PlaylistTreeNode.tsx: アイコン 32px、ホバー白/7%、選択テキスト white、行高さ py-2
 - [x] PlaylistSidebar.tsx: 「マイライブラリ」ヘッダー、「プレイリスト」セクションラベル、閉じ時ボタン w-10
 
+## スケルトン UI 実装（完了）
+- [x] globals.css: `.animate-skeleton` クラス追加（shimmer keyframe 再利用）
+- [x] components/ui/Skeleton.tsx: 新規作成（汎用スケルトンベースコンポーネント）
+- [x] PlaylistDetailView.tsx: isLoading スピナー → PlaylistDetailSkeleton に置換（hero/アクションバー/カラムヘッダー/6トラック行を実コンテンツと同一グリッド構造でスケルトン化）
+- [x] PlaylistSidebar.tsx: isLoading スピナー → 6 行ツリーノード形スケルトンに置換（実ノードと同一 gap/padding/icon サイズ）
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## UX 改善 3機能（完了）
 - [x] InlineTrackSearch.tsx: 新規作成（AddTrackModal の非モーダル版、インラインパネル形式）
 - [x] PlaylistDetailView.tsx: AddTrackModal → InlineTrackSearch に置き換え（アクションバー直下にインライン表示、ListPlus ボタンはトグル動作）

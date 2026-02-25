@@ -54,6 +54,7 @@ import {
 import { usePlayerStore } from "@/stores/playerStore";
 import { api } from "@/lib/api";
 import { InlineTrackSearch } from "@/components/spotify/InlineTrackSearch";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 const CreatePlaylistModal = dynamic(() =>
   import("@/components/playlist/CreatePlaylistModal").then((m) => ({ default: m.CreatePlaylistModal }))
@@ -809,11 +810,7 @@ export function PlaylistDetailView({ id }: Props) {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-6 h-6 border-2 border-accent-purple/60 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <PlaylistDetailSkeleton />;
   }
 
   if (isError) {
@@ -1185,6 +1182,97 @@ export function PlaylistDetailView({ id }: Props) {
         </DragOverlay>
       </DndContext>
     </DetailDndCtx.Provider>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PlaylistDetailSkeleton — ローディング中のスケルトン UI
+// 実コンテンツと完全に同一のレイアウト構造を使いレイアウトシフトを防ぐ
+// ---------------------------------------------------------------------------
+
+function PlaylistDetailSkeleton() {
+  // トラック行ごとのスケルトン幅バリエーション（静的クラス名 = Tailwind に含まれる）
+  const rows = [
+    { t: "w-36", a: "w-24", al: "w-32" },
+    { t: "w-28", a: "w-20", al: "w-40" },
+    { t: "w-44", a: "w-28", al: "w-28" },
+    { t: "w-32", a: "w-16", al: "w-36" },
+    { t: "w-40", a: "w-24", al: "w-24" },
+    { t: "w-24", a: "w-20", al: "w-32" },
+  ] as const;
+
+  return (
+    <div className="space-y-0">
+      {/* ─── ヒーローヘッダー（実コンテンツと同一クラス） ─── */}
+      <div className="-mx-4 md:-mx-8 px-4 md:px-8 pt-8 pb-6">
+        <div className="flex items-end gap-6">
+          {/* カバーアート：実コンテンツと同サイズ */}
+          <Skeleton className="w-40 h-40 md:w-48 md:h-48 rounded-xl shrink-0" />
+
+          {/* テキストエリア：pb-2 は実コンテンツと同じ下揃え */}
+          <div className="min-w-0 flex-1 pb-2">
+            {/* "プレイリスト" ラベル（text-xs ≈ h-3, mb-2） */}
+            <Skeleton className="h-3 w-16 mb-3" />
+            {/* タイトル（text-4xl leading-tight ≈ h-10 / md:text-5xl ≈ md:h-14） */}
+            <Skeleton className="h-10 md:h-14 w-3/4" />
+            {/* "X 曲" サブタイトル（text-sm mt-3） */}
+            <Skeleton className="h-3.5 w-20 mt-3" />
+          </div>
+        </div>
+      </div>
+
+      {/* ─── アクションバー（実コンテンツと同一クラス） ─── */}
+      <div className="flex items-center gap-3 pt-6 pb-2 flex-wrap">
+        {/* ListPlus 円形ボタン */}
+        <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+        {/* サブPL / Spotify書き出し / Spotifyで開く の pill ボタン */}
+        <Skeleton className="h-7 w-16 rounded-full" />
+        <Skeleton className="h-7 w-36 rounded-full" />
+        <Skeleton className="h-7 w-28 rounded-full" />
+        {/* 削除ボタン（ml-auto） */}
+        <Skeleton className="h-7 w-7 rounded-full ml-auto" />
+      </div>
+
+      {/* ─── カラムヘッダー（sticky / 実コンテンツと同一グリッド） ─── */}
+      <div className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 mb-1">
+        <span />
+        <Skeleton className="h-2.5 w-4" />
+        <Skeleton className="h-2.5 w-12" />
+        <Skeleton className="h-2.5 w-14" />
+        <Skeleton className="h-2.5 w-12" />
+        <Skeleton className="h-2.5 w-6" />
+      </div>
+
+      {/* ─── トラック行（実コンテンツと同一グリッド・パディング） ─── */}
+      <ul>
+        {rows.map(({ t, a, al }, i) => (
+          <li
+            key={i}
+            className="grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 items-center"
+          >
+            {/* # 番号（16px 列） */}
+            <Skeleton className="h-3 w-3" />
+            {/* アルバムアート + 曲名/アーティスト（auto 列）*/}
+            <div className="flex items-center gap-3">
+              {/* アルバムアート：w-9 h-9 = 実コンテンツと同サイズ */}
+              <Skeleton className="w-9 h-9 rounded-md shrink-0" />
+              <div className="flex flex-col gap-1.5">
+                {/* 曲名（text-sm ≈ h-3.5） */}
+                <Skeleton className={`h-3.5 ${t}`} />
+                {/* アーティスト（text-xs ≈ h-3） */}
+                <Skeleton className={`h-3 ${a}`} />
+              </div>
+            </div>
+            {/* アルバム（1fr 列） */}
+            <Skeleton className={`h-3 ${al}`} />
+            {/* 追加日（auto 列） */}
+            <Skeleton className="h-3 w-16" />
+            {/* 再生時間（auto 列） */}
+            <Skeleton className="h-3 w-10" />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
