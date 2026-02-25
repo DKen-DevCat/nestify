@@ -47,22 +47,24 @@ export default function Image() {
           }}
         />
 
-        {/* ロゴアイコン */}
+        {/* ロゴアイコン: ネスト構造バー */}
         <div
           style={{
             width: 96,
             height: 96,
-            borderRadius: 24,
+            borderRadius: 22,
             display: "flex",
-            alignItems: "center",
+            flexDirection: "column",
             justifyContent: "center",
-            fontSize: 48,
-            background: "linear-gradient(135deg, rgba(124,106,247,0.25), rgba(247,106,138,0.25))",
-            border: "1px solid rgba(124,106,247,0.4)",
-            marginBottom: 28,
+            gap: 0,
+            padding: "18px 16px",
+            background: "linear-gradient(135deg, #7c6af7, #f76a8a)",
+            marginBottom: 32,
           }}
         >
-          🌿
+          <div style={{ width: "100%",  height: 12, borderRadius: 6, background: "rgba(255,255,255,0.95)", marginBottom: 9 }} />
+          <div style={{ width: "72%",   height: 10, borderRadius: 5, background: "rgba(255,255,255,0.75)", marginBottom: 9, marginLeft: "14%" }} />
+          <div style={{ width: "46%",   height: 10, borderRadius: 5, background: "rgba(255,255,255,0.55)", marginLeft: "28%" }} />
         </div>
 
         {/* タイトル */}

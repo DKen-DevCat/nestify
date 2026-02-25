@@ -383,6 +383,13 @@
 - [x] Issues: none found — コード修正不要
 - [x] Suggestion 確認: icon-only ボタンへの `aria-label` 追加は任意のアクセシビリティ改善。優先度低のため今回は対応見送り
 
+## favicon / OGP / metadata 整備（完了）
+- [x] icon.svg 新規作成（グラデーション角丸 + 3段インデントバーでネスト構造を表現）
+- [x] opengraph-image.tsx: 🌿 絵文字 → SVGロゴデザイン（div要素で同じ視覚デザインを再現）
+- [x] manifest.ts: icon.svg (SVG/maskable) + favicon.ico (48x48) を明示的に追加
+- [x] layout.tsx: icons メタデータに icon.svg + favicon.ico を明示追加
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## バグ修正: 全曲追加で1,2曲しか追加できない（完了）
 - [x] 原因: Promise.allSettled による並列リクエストで MAX(order) が競合し大半の INSERT が失敗
 - [x] 修正: handleAddAll を for...of ループの直列実行に変更

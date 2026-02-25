@@ -42,6 +42,15 @@ export const metadata: Metadata = {
     title: "Nestify — ネスト型プレイリスト管理",
     description: SITE_DESCRIPTION,
   },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
+    ],
+    apple: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
   robots: {
     index: false,
     follow: false,
