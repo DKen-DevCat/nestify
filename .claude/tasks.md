@@ -373,3 +373,8 @@
 - [x] Issues: none found — コード修正不要
 - [x] Suggestion 確認: `aria-live="polite"` は任意のアクセシビリティ改善。優先度低のため今回は対応見送り
 - [x] Suggestion 確認: スティッキーヘッダーの exit トランジションは任意の UX 改善。現状の条件レンダリングで十分と判断、維持
+
+## Codex レビュー対応 — 2026-02-25 13:46:35
+- [x] Issues: none found — コード修正不要
+- [x] Suggestion 確認: `aria-hidden` を Skeleton に追加することは任意のアクセシビリティ改善。優先度低のため今回は対応見送り
+- [x] Suggestion 確認: スケルトン行設定のレンダー外ホイストは任意の最適化。現状で十分と判断、維持

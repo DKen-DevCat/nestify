@@ -352,3 +352,11 @@ Suggestions: add `aria-live="polite"` to the addError message for accessibility,
 Positives: conditional rendering removes the sticky-header spacer, addedIds reset fixes cross-playlist blocking, error feedback improves UX, and the review docs are updated.
 
 > ステータス: 対応完了（Issues なし）
+
+---
+
+## Codex レビュー — 2026-02-25 13:46:35
+
+Unstaged changes: none; staged changes: none. Issues: none found in the latest commit; Suggestions: consider adding `aria-hidden` to `Skeleton` placeholders and hoist static skeleton row configs out of render to avoid re-creation. Positives: skeletons mirror real layout to prevent CLS, reuse the existing shimmer keyframe via `.animate-skeleton`, and introduce a reusable `Skeleton` component.
+
+> ステータス: 対応完了（Issues なし）
