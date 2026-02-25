@@ -379,6 +379,10 @@
 - [x] Suggestion 確認: `aria-hidden` を Skeleton に追加することは任意のアクセシビリティ改善。優先度低のため今回は対応見送り
 - [x] Suggestion 確認: スケルトン行設定のレンダー外ホイストは任意の最適化。現状で十分と判断、維持
 
+## Codex レビュー対応 — 2026-02-25 14:05:35
+- [x] Issues: none found — コード修正不要
+- [x] Suggestion 確認: icon-only ボタンへの `aria-label` 追加は任意のアクセシビリティ改善。優先度低のため今回は対応見送り
+
 ## 再生機能の削除 + スティッキーヘッダーへのボタン追加（完了）
 - [x] PlaylistDetailView.tsx: SortableTrackItem の Play ホバーエフェクト（番号切り替え・アルバムアートオーバーレイ）を削除
 - [x] PlaylistDetailView.tsx: Play アイコンを lucide imports から削除
