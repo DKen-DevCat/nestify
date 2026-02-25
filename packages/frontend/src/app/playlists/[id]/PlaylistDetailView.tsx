@@ -902,6 +902,10 @@ export function PlaylistDetailView({ id }: Props) {
                 )}
               </div>
             </div>
+            {/* 検索バー */}
+            <div className="mt-1.5">
+              <InlineTrackSearch playlistId={id} playlist={playlist} />
+            </div>
           </div>
         )}
 
