@@ -454,6 +454,13 @@
 - [x] PlaylistDetailView.tsx: スティッキーヘッダーにサブPL / Spotifyへ書き出し / Spotifyで開く ボタンを追加（前セッション済み）
 - [x] tsc --noEmit でフロントエンドエラーなし確認
 
+## クロスコンテナ DnD 位置修正（完了）
+- [x] handleDragOver 追加: ドラッグ中に localContainerItems をリアルタイム更新（視覚フィードバック）
+- [x] handleDragEnd 修正: over.id から挿入位置を計算し、moveTrack → reorderItems の順で API 呼び出し
+- [x] dragSourceContainerId state 追加: DragOver 中も source を正しく参照
+- [x] DndContext に onDragOver 追加
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## 検索UX改善 + sticky バグ修正（完了）
 - [x] InlineTrackSearch: TrackRow <li> に onClick を追加（行クリックで曲追加）
 - [x] InlineTrackSearch: containerRef + mousedown で枠外クリック時に query をクリア（パネルを閉じる）

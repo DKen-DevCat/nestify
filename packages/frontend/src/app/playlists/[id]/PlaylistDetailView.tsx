@@ -19,6 +19,7 @@ import {
   closestCenter,
   type DragEndEvent,
   type DragStartEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -545,6 +546,9 @@ export function PlaylistDetailView({ id }: Props) {
   const heroRef = useRef<HTMLDivElement>(null);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
 
+  // DnD: ドラッグ開始時の元コンテナ（DragOver 中も source を正しく参照するため）
+  const [dragSourceContainerId, setDragSourceContainerId] = useState<string | null>(null);
+
   const { data: playlists } = usePlaylistTree();
   const { data: tracks, isLoading, isError, refetch } = usePlaylistTracks(id);
   const { mutate: deletePlaylist, isPending: isDeleting } = useDeletePlaylist();
@@ -677,6 +681,7 @@ export function PlaylistDetailView({ id }: Props) {
   const handleDragStart = (event: DragStartEvent) => {
     const activeId = String(event.active.id);
     const containerId = trackToContainer.get(activeId);
+    setDragSourceContainerId(containerId ?? null);
     if (!containerId) return;
     const items = displayContainerItems[containerId] ?? [];
     const found = items.find((m) => m.kind === "track" && m.item.id === activeId);
@@ -688,6 +693,7 @@ export function PlaylistDetailView({ id }: Props) {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTrack(null);
+    setDragSourceContainerId(null);
 
     if (!over || active.id === over.id) return;
 
@@ -721,28 +727,78 @@ export function PlaylistDetailView({ id }: Props) {
       });
     } else {
       // クロスコンテナ: トラック移動
-      const activeItemInSource = displayContainerItems[sourceContainerId]?.find(
-        (m) => m.item.id === activeId,
-      );
-      if (!activeItemInSource || activeItemInSource.kind !== "track") return;
+      // handleDragOver が既に localContainerItems を正しい順序に更新済みなので
+      // その状態を確定させて API を呼び出す
+      const current = localContainerItems ?? displayContainerItems;
+      const finalTargetItems = current[targetContainerId] ?? [];
 
-      const targetItems = displayContainerItems[targetContainerId] ?? [];
-      const order = targetItems.filter((m) => m.kind === "track").length;
+      // moveTrack → reorderItems の順で実行（order の競合を防ぐため）
+      (async () => {
+        try {
+          const moveRes = await api.playlists.moveTrack(id, activeId, targetContainerId, 0);
+          if (!moveRes.ok) { setLocalContainerItems(null); return; }
 
-      // 楽観的更新
-      setLocalContainerItems((prev) => {
-        const current = prev ?? displayContainerItems;
-        return {
-          ...current,
-          [sourceContainerId]: (current[sourceContainerId] ?? []).filter(
-            (m) => m.item.id !== activeId,
-          ),
-          [targetContainerId]: [...(current[targetContainerId] ?? []), activeItemInSource],
-        };
-      });
+          await api.playlists.reorderItems(
+            targetContainerId,
+            finalTargetItems.map((m) => ({
+              type: m.kind === "track" ? ("track" as const) : ("playlist" as const),
+              id: m.item.id,
+            })),
+          );
 
-      moveTrackMutate({ trackId: activeId, targetPlaylistId: targetContainerId, order });
+          queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
+          queryClient.invalidateQueries({ queryKey: ["playlists"] });
+        } catch {
+          setLocalContainerItems(null);
+        }
+      })();
     }
+  };
+
+  // ドラッグ中のクロスコンテナ視覚フィードバック
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    // ドラッグ開始時に記録した source を使用（trackToContainer は更新されうるため）
+    const sourceId = dragSourceContainerId;
+    if (!sourceId) return;
+
+    // over が track の場合 → その track のコンテナ、コンテナ id の場合 → そのまま
+    const destId = trackToContainer.get(overId) ?? overId;
+
+    // 同一コンテナは SortableContext に任せる
+    if (sourceId === destId) return;
+
+    setLocalContainerItems((prev) => {
+      const current = prev ?? displayContainerItems;
+      if (!(destId in current)) return current;
+
+      // active item を現在のどこかのコンテナから探す
+      let activeItem: MixedItem | undefined;
+      for (const items of Object.values(current)) {
+        const found = items.find((m) => m.item.id === activeId);
+        if (found) { activeItem = found; break; }
+      }
+      if (!activeItem || activeItem.kind !== "track") return current;
+
+      // dest から active を除いた配列を作り、over の位置に挿入
+      const destWithoutActive = (current[destId] ?? []).filter((m) => m.item.id !== activeId);
+      const overIdx = destWithoutActive.findIndex((m) => m.item.id === overId);
+      const insertAt = overIdx !== -1 ? overIdx : destWithoutActive.length;
+      destWithoutActive.splice(insertAt, 0, activeItem);
+
+      // 全コンテナから active を除去し、dest だけ新配列にする
+      return Object.fromEntries(
+        Object.entries(current).map(([cid, items]) => [
+          cid,
+          cid === destId ? destWithoutActive : items.filter((m) => m.item.id !== activeId),
+        ]),
+      );
+    });
   };
 
   const { mutate: exportPlaylist, isPending: isExporting } = useMutation({
@@ -823,8 +879,9 @@ export function PlaylistDetailView({ id }: Props) {
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
-        onDragCancel={() => setActiveTrack(null)}
+        onDragCancel={() => { setActiveTrack(null); setDragSourceContainerId(null); }}
       >
         {/* ─── スティッキーコンパクトヘッダー（ヒーローがスクロールアウト時のみ描画） ─── */}
         {showStickyHeader && (
