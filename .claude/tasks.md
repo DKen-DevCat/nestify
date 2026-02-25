@@ -383,6 +383,13 @@
 - [x] Issues: none found — コード修正不要
 - [x] Suggestion 確認: icon-only ボタンへの `aria-label` 追加は任意のアクセシビリティ改善。優先度低のため今回は対応見送り
 
+## アルバム単位で曲を追加（完了）
+- [x] BE: spotifyService.ts に SpotifyAlbumResult 型 + searchAlbums / getAlbumWithTracks 追加
+- [x] BE: routes/spotify.ts に GET /api/spotify/albums/search + GET /api/spotify/albums/:albumId/tracks 追加
+- [x] FE: api.ts に SpotifyAlbum 型 + api.spotify.albumSearch / albumTracks 追加
+- [x] FE: InlineTrackSearch.tsx を全面更新（曲/アルバム タブ + アルバムドリルダウン + 全曲追加）
+- [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認
+
 ## 検索バーを常時表示に変更（完了）
 - [x] InlineTrackSearch.tsx: onClose prop を削除、外側カードを廃止
 - [x] InlineTrackSearch.tsx: 検索バーを常時表示（空状態はシンプルなバー、入力後に結果パネル展開）

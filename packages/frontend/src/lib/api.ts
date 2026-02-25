@@ -140,5 +140,22 @@ export const api = {
       apiFetch<import("@nestify/shared").SpotifyTrack[]>(
         `/api/spotify/search?q=${encodeURIComponent(q)}`,
       ),
+    albumSearch: (q: string) =>
+      apiFetch<SpotifyAlbum[]>(
+        `/api/spotify/albums/search?q=${encodeURIComponent(q)}`,
+      ),
+    albumTracks: (albumId: string) =>
+      apiFetch<{ album: SpotifyAlbum; tracks: import("@nestify/shared").SpotifyTrack[] }>(
+        `/api/spotify/albums/${albumId}/tracks`,
+      ),
   },
 };
+
+export interface SpotifyAlbum {
+  id: string;
+  name: string;
+  artists: string[];
+  imageUrl: string | null;
+  totalTracks: number;
+  releaseDate: string;
+}

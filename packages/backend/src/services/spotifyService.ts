@@ -623,3 +623,167 @@ export async function exportSubtreeToSpotify(
 
   return { ok: true, data: exported };
 }
+
+// ---------------------------------------------------------------------------
+// Spotify アルバム検索
+// ---------------------------------------------------------------------------
+
+export interface SpotifyAlbumResult {
+  id: string;
+  name: string;
+  artists: string[];
+  imageUrl: string | null;
+  totalTracks: number;
+  releaseDate: string;
+}
+
+export async function searchAlbums(
+  query: string,
+  userId: string,
+): Promise<Result<SpotifyAlbumResult[]>> {
+  const tokenResult = await getValidAccessToken(userId);
+  if (!tokenResult.ok) return tokenResult;
+
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=20`;
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${tokenResult.data}` },
+    signal: AbortSignal.timeout(10_000),
+  }).catch((): null => null);
+
+  if (!res) {
+    return { ok: false, error: "Spotify album search timed out", status: 504 };
+  }
+  if (!res.ok) {
+    return { ok: false, error: `Spotify album search failed (${res.status})`, status: 500 };
+  }
+
+  const data = (await res.json()) as {
+    albums?: {
+      items: Array<{
+        id: string;
+        name: string;
+        artists: { name: string }[];
+        images: { url: string }[];
+        total_tracks: number;
+        release_date: string;
+      }>;
+    };
+  };
+
+  if (!data.albums?.items) return { ok: true, data: [] };
+
+  return {
+    ok: true,
+    data: data.albums.items.map((a) => ({
+      id: a.id,
+      name: a.name,
+      artists: a.artists.map((ar) => ar.name),
+      imageUrl: a.images[0]?.url ?? null,
+      totalTracks: a.total_tracks,
+      releaseDate: a.release_date,
+    })),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Spotify アルバムの全トラックを取得
+// ---------------------------------------------------------------------------
+
+export async function getAlbumWithTracks(
+  albumId: string,
+  userId: string,
+): Promise<Result<{ album: SpotifyAlbumResult; tracks: SpotifyTrack[] }>> {
+  const tokenResult = await getValidAccessToken(userId);
+  if (!tokenResult.ok) return tokenResult;
+
+  const token = tokenResult.data;
+
+  const res = await fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(10_000),
+  }).catch((): null => null);
+
+  if (!res) {
+    return { ok: false, error: "Spotify album fetch timed out", status: 504 };
+  }
+  if (!res.ok) {
+    return { ok: false, error: `Spotify album fetch failed (${res.status})`, status: 500 };
+  }
+
+  const data = (await res.json()) as {
+    id: string;
+    name: string;
+    artists: { name: string }[];
+    images: { url: string }[];
+    total_tracks: number;
+    release_date: string;
+    tracks: {
+      items: Array<{
+        id: string;
+        name: string;
+        artists: { name: string }[];
+        duration_ms: number;
+        preview_url: string | null;
+      }>;
+      next: string | null;
+    };
+  };
+
+  const imageUrl = data.images[0]?.url ?? null;
+
+  const album: SpotifyAlbumResult = {
+    id: data.id,
+    name: data.name,
+    artists: data.artists.map((a) => a.name),
+    imageUrl,
+    totalTracks: data.total_tracks,
+    releaseDate: data.release_date,
+  };
+
+  const allTracks: SpotifyTrack[] = data.tracks.items.map((t) => ({
+    id: t.id,
+    name: t.name,
+    artists: t.artists.map((a) => a.name),
+    album: data.name,
+    durationMs: t.duration_ms,
+    previewUrl: t.preview_url,
+    imageUrl,
+  }));
+
+  // 50曲超のアルバムをページネーション
+  let nextUrl: string | null = data.tracks.next;
+  while (nextUrl) {
+    const pageRes = await fetch(nextUrl, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10_000),
+    }).catch((): null => null);
+    if (!pageRes || !pageRes.ok) break;
+
+    const page = (await pageRes.json()) as {
+      items: Array<{
+        id: string;
+        name: string;
+        artists: { name: string }[];
+        duration_ms: number;
+        preview_url: string | null;
+      }>;
+      next: string | null;
+    };
+
+    allTracks.push(
+      ...page.items.map((t) => ({
+        id: t.id,
+        name: t.name,
+        artists: t.artists.map((a) => a.name),
+        album: data.name,
+        durationMs: t.duration_ms,
+        previewUrl: t.preview_url,
+        imageUrl,
+      })),
+    );
+    nextUrl = page.next;
+  }
+
+  return { ok: true, data: { album, tracks: allTracks } };
+}
