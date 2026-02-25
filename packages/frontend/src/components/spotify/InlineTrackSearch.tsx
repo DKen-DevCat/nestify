@@ -217,6 +217,7 @@ export function InlineTrackSearch({ playlistId, playlist }: Props) {
           ref={inputRef}
           type="text"
           placeholder="曲・アルバムを検索して追加..."
+          aria-label="曲・アルバムを検索"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="flex-1 bg-transparent text-sm outline-none"

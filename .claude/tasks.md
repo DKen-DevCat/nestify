@@ -383,6 +383,10 @@
 - [x] Issues: none found — コード修正不要
 - [x] Suggestion 確認: icon-only ボタンへの `aria-label` 追加は任意のアクセシビリティ改善。優先度低のため今回は対応見送り
 
+## Codex レビュー対応 — 2026-02-25 14:34:07 / 14:34:59
+- [x] Issue: stray `2m` → アルバム検索実装時の全面書き換えで解消済み
+- [x] Suggestion: search input に aria-label="曲・アルバムを検索" を追加
+
 ## アルバム単位で曲を追加（完了）
 - [x] BE: spotifyService.ts に SpotifyAlbumResult 型 + searchAlbums / getAlbumWithTracks 追加
 - [x] BE: routes/spotify.ts に GET /api/spotify/albums/search + GET /api/spotify/albums/:albumId/tracks 追加

@@ -369,3 +369,31 @@ Unstaged changes: none. Staged changes: none.
 **Issues:** none found in the latest commit. **Suggestions:** add `aria-label` on icon-only buttons (labels hidden on small screens) for accessibility. **Positives:** clean removal of NowPlayingBar/playerStore and play interactions, plus sticky header action buttons with proper disabled/loader states.
 
 > ステータス: 対応完了（Issues なし）
+
+---
+
+## Codex レビュー — 2026-02-25 14:26:49
+
+Unstaged changes: none. Staged changes: none. Latest commit only updates .claude/plan.md and .claude/tasks.md with review notes; **Issues:** none; **Suggestions:** none necessary (docs-only change); **Positives:** clear audit trail of review status and decisions.
+
+> ステータス: 対応完了（Issues なし）
+
+---
+
+## Codex レビュー — 2026-02-25 14:34:07
+
+Unstaged changes: `.claude/plan.md` only; staged changes: none.
+Issue: `InlineTrackSearch.tsx` has a stray `2m` inserted in the JSX button line (`aria-label` block) which will cause a syntax/build error.
+Suggestions/positives: consider restoring autofocus if desired for UX; positives include always-visible search bar with conditional results panel and cleanup of add-track toggle/buttons in `PlaylistDetailView`.
+
+> ステータス: 対応済み — stray `2m` はアルバム検索機能実装時の全面書き換えで解消
+
+---
+
+## Codex レビュー — 2026-02-25 14:34:59
+
+Issues: none detected in the latest commit; unstaged change only .claude/plan.md (review notes), staged none.
+Suggestions: consider adding an explicit aria-label to the search input (placeholder-only label) and optionally focus the input on mount if quick entry is desired.
+Positives: always-visible search bar with conditional results panel, simplified playlist actions by removing add-track toggles, and empty-state/skeleton updates aligned to the new flow.
+
+> ステータス: 対応済み — search input に aria-label="曲・アルバムを検索" を追加
