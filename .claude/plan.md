@@ -334,3 +334,11 @@ Issues: Unstaged changes add `AbortSignal.timeout(10_000)` to Spotify fetches; i
 Unstaged: none; staged: none. Issues: NowPlayingBar reads playerStore but nothing sets currentTrack, so it will stay on “再生していません” with disabled controls; Suggestions: wire track click/selection to playTrack (and sourcePlaylistId) and add aria-labels to icon-only controls; Positives: cohesive Spotify-style theming and layout refactor with fixed playback bar + sticky headers.
 
 > ステータス: 対応完了（playTrack 接続・アクティブハイライト・aria-label 追加）
+
+---
+
+## Codex レビュー — 2026-02-25 10:11:08
+
+Issues: the sticky header is always in the layout (opacity/pointerEvents only), so it likely leaves a blank spacer above the hero even when hidden; addedIds is global across target playlist selection, so a track added to one child can’t be added to another without closing/reopening. Suggestions: conditionally render the sticky header or collapse its height when hidden, and scope addedIds per target (or clear on target change) plus surface addTrack failures with feedback. Positives: the inline search adds debounced queries with clear empty/error states, the retry button improves recoverability, and the compact header UX is a nice navigation upgrade.
+
+> ステータス: 対応完了（スティッキーヘッダー条件レンダリング化・addedIds スコープ修正・addTrack 失敗フィードバック追加）

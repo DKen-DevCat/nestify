@@ -30,6 +30,7 @@ export function InlineTrackSearch({ playlistId, playlist, onClose }: Props) {
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
   const [targetPlaylistId, setTargetPlaylistId] = useState(playlistId);
   const [isAdding, setIsAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -51,6 +52,12 @@ export function InlineTrackSearch({ playlistId, playlist, onClose }: Props) {
     inputRef.current?.focus();
   }, []);
 
+  // 追加先が変わったら addedIds・エラーをリセット
+  useEffect(() => {
+    setAddedIds(new Set());
+    setAddError(null);
+  }, [targetPlaylistId]);
+
   const {
     data: tracks,
     isFetching,
@@ -71,11 +78,14 @@ export function InlineTrackSearch({ playlistId, playlist, onClose }: Props) {
   const handleAdd = async (track: SpotifyTrack) => {
     if (addedIds.has(track.id) || isAdding) return;
     setIsAdding(true);
+    setAddError(null);
     const res = await api.playlists.addTrack(targetPlaylistId, track.id, track);
     setIsAdding(false);
     if (res.ok) {
       setAddedIds((prev) => new Set(prev).add(track.id));
       queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
+    } else {
+      setAddError("追加に失敗しました。再度お試しください。");
     }
   };
 
@@ -225,12 +235,16 @@ export function InlineTrackSearch({ playlistId, playlist, onClose }: Props) {
         )}
       </div>
 
-      {/* フッター: 追加済み曲数 */}
-      {addedIds.size > 0 && (
+      {/* フッター: 追加済み曲数 / エラー */}
+      {(addedIds.size > 0 || addError) && (
         <div className="px-4 py-2 border-t border-white/5">
-          <p className="text-xs text-accent-green text-center">
-            {addedIds.size} 曲を追加しました
-          </p>
+          {addError ? (
+            <p className="text-xs text-accent-pink text-center">{addError}</p>
+          ) : (
+            <p className="text-xs text-accent-green text-center">
+              {addedIds.size} 曲を追加しました
+            </p>
+          )}
         </div>
       )}
     </div>

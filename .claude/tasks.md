@@ -344,6 +344,15 @@
 - [x] PlaylistDetailView.tsx: isError 時に refetch() を呼ぶ「再試行」ボタンを追加（RefreshCw アイコン）
 - [x] tsc --noEmit でフロントエンドエラーなし確認
 
+## Codex レビュー対応 — 2026-02-25 10:11:08
+- [x] Issue: スティッキーヘッダーが `opacity: 0` のまま DOM に残りヒーロー上部に空白スペーサーが発生
+  → `{showStickyHeader && (...)}` の条件レンダリングに変更し、非表示時は DOM から除去
+- [x] Issue: `addedIds` がグローバルで、追加先変更後に別PL へ同曲が追加できなかった
+  → `targetPlaylistId` が変わるたびに `addedIds` と `addError` をリセットする `useEffect` を追加
+- [x] Suggestion: addTrack 失敗時のフィードバックなし
+  → `addError` state を追加し、失敗時にフッターへエラーメッセージを表示（accent-pink）
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## Codex レビュー対応 — 2026-02-25 00:11:56
 - [x] Issue: `AbortSignal.timeout` がタイムアウトした場合の abort エラーが未処理 → `.catch((): null => null)` で null に変換し `Result` として返すよう修正
   - `refreshAccessToken`: タイムアウト時に `{ ok: false, error: "...", status: 504 }` を返す

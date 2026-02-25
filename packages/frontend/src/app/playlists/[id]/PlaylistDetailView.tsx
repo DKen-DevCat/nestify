@@ -857,47 +857,47 @@ export function PlaylistDetailView({ id }: Props) {
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveTrack(null)}
       >
-        {/* ─── スティッキーコンパクトヘッダー ─── */}
-        <div
-          className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 py-2 transition-all duration-300"
-          style={{
-            background: showStickyHeader ? "rgba(10,10,20,0.95)" : "transparent",
-            backdropFilter: showStickyHeader ? "blur(12px)" : "none",
-            WebkitBackdropFilter: showStickyHeader ? "blur(12px)" : "none",
-            borderBottom: showStickyHeader ? "1px solid rgba(255,255,255,0.06)" : "none",
-            opacity: showStickyHeader ? 1 : 0,
-            pointerEvents: showStickyHeader ? "auto" : "none",
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="relative w-8 h-8 rounded shrink-0 overflow-hidden"
-              style={{ background: coverColor }}
-            >
-              {playlist?.imageUrl && (
-                <Image
-                  src={playlist.imageUrl}
-                  alt={playlist.name}
-                  fill
-                  sizes="32px"
-                  className="object-cover"
-                />
-              )}
+        {/* ─── スティッキーコンパクトヘッダー（ヒーローがスクロールアウト時のみ描画） ─── */}
+        {showStickyHeader && (
+          <div
+            className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 py-2 animate-fade-in"
+            style={{
+              background: "rgba(10,10,20,0.95)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="relative w-8 h-8 rounded shrink-0 overflow-hidden"
+                style={{ background: coverColor }}
+              >
+                {playlist?.imageUrl && (
+                  <Image
+                    src={playlist.imageUrl}
+                    alt={playlist.name}
+                    fill
+                    sizes="32px"
+                    className="object-cover"
+                  />
+                )}
+              </div>
+              <span className="font-[family-name:var(--font-syne)] font-bold text-base text-white truncate flex-1">
+                {playlist?.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsAddingTrack((v) => !v)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{ background: "#7c6af7", color: "white" }}
+              >
+                <ListPlus size={13} />
+                曲を追加
+              </button>
             </div>
-            <span className="font-[family-name:var(--font-syne)] font-bold text-base text-white truncate flex-1">
-              {playlist?.name}
-            </span>
-            <button
-              type="button"
-              onClick={() => setIsAddingTrack((v) => !v)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
-              style={{ background: "#7c6af7", color: "white" }}
-            >
-              <ListPlus size={13} />
-              曲を追加
-            </button>
           </div>
-        </div>
+        )}
 
         <div className="space-y-0 animate-fade-in">
           {/* ─── ヒーローヘッダー ─── */}
