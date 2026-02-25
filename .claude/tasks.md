@@ -361,3 +361,8 @@
 - [x] Suggestion: `AbortSignal.timeout` の Bun ランタイムサポート確認 — Bun は Web APIs 準拠のため対応済み
 - [x] Suggestion: `retry: 1` の UX 妥当性確認 — 10s タイムアウト × 3 retry = 最大 30 秒待ちを避けるための意図的な設計。維持。
 - [x] tsc --noEmit でバックエンドエラーなし確認
+
+## Codex レビュー対応 — 2026-02-25 10:19:47
+- [x] Issues: none found — コード修正不要
+- [x] Suggestion 確認: `aria-live="polite"` は任意のアクセシビリティ改善。優先度低のため今回は対応見送り
+- [x] Suggestion 確認: スティッキーヘッダーの exit トランジションは任意の UX 改善。現状の条件レンダリングで十分と判断、維持

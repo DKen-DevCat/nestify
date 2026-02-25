@@ -342,3 +342,13 @@ Unstaged: none; staged: none. Issues: NowPlayingBar reads playerStore but nothin
 Issues: the sticky header is always in the layout (opacity/pointerEvents only), so it likely leaves a blank spacer above the hero even when hidden; addedIds is global across target playlist selection, so a track added to one child can’t be added to another without closing/reopening. Suggestions: conditionally render the sticky header or collapse its height when hidden, and scope addedIds per target (or clear on target change) plus surface addTrack failures with feedback. Positives: the inline search adds debounced queries with clear empty/error states, the retry button improves recoverability, and the compact header UX is a nice navigation upgrade.
 
 > ステータス: 対応完了（スティッキーヘッダー条件レンダリング化・addedIds スコープ修正・addTrack 失敗フィードバック追加）
+
+---
+
+## Codex レビュー — 2026-02-25 10:19:47
+
+Issues: none found in the latest diff; no obvious regressions from the UI state changes.  
+Suggestions: add `aria-live="polite"` to the addError message for accessibility, and if the abrupt hide feels jarring consider a small exit transition on the sticky header (e.g., CSS opacity on unmount).  
+Positives: conditional rendering removes the sticky-header spacer, addedIds reset fixes cross-playlist blocking, error feedback improves UX, and the review docs are updated.
+
+> ステータス: 対応完了（Issues なし）
