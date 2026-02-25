@@ -41,6 +41,7 @@ import {
   ChevronRight,
   Pencil,
   Play,
+  RefreshCw,
 } from "lucide-react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -52,12 +53,10 @@ import {
 } from "@/hooks/usePlaylistMutations";
 import { usePlayerStore } from "@/stores/playerStore";
 import { api } from "@/lib/api";
+import { InlineTrackSearch } from "@/components/spotify/InlineTrackSearch";
 
 const CreatePlaylistModal = dynamic(() =>
   import("@/components/playlist/CreatePlaylistModal").then((m) => ({ default: m.CreatePlaylistModal }))
-);
-const AddTrackModal = dynamic(() =>
-  import("@/components/spotify/AddTrackModal").then((m) => ({ default: m.AddTrackModal }))
 );
 import type { Playlist } from "@nestify/shared";
 import type { TrackWithSource } from "@/lib/api";
@@ -581,8 +580,12 @@ export function PlaylistDetailView({ id }: Props) {
   const [renameValue, setRenameValue] = useState("");
   const renameInputRef = useRef<HTMLInputElement>(null);
 
+  // スティッキーヘッダー制御
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [showStickyHeader, setShowStickyHeader] = useState(false);
+
   const { data: playlists } = usePlaylistTree();
-  const { data: tracks, isLoading, isError } = usePlaylistTracks(id);
+  const { data: tracks, isLoading, isError, refetch } = usePlaylistTracks(id);
   const { mutate: deletePlaylist, isPending: isDeleting } = useDeletePlaylist();
   const { mutate: updatePlaylist } = useUpdatePlaylist();
 
@@ -624,6 +627,18 @@ export function PlaylistDetailView({ id }: Props) {
   useEffect(() => {
     setLocalContainerItems(null);
   }, [serverContainerItems]);
+
+  // ヒーローセクションがスクロールアウトしたらスティッキーヘッダーを表示
+  useEffect(() => {
+    const el = heroRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyHeader(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const displayContainerItems = localContainerItems ?? serverContainerItems;
 
@@ -803,8 +818,20 @@ export function PlaylistDetailView({ id }: Props) {
 
   if (isError) {
     return (
-      <div className="text-center py-16">
+      <div className="text-center py-16 flex flex-col items-center gap-4">
         <p className="text-accent-pink/70 text-sm">トラックの読み込みに失敗しました</p>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors duration-150 hover:scale-[1.02]"
+          style={{
+            border: "1px solid rgba(124,106,247,0.3)",
+            color: "#7c6af7",
+          }}
+        >
+          <RefreshCw size={14} />
+          再試行
+        </button>
       </div>
     );
   }
@@ -830,9 +857,52 @@ export function PlaylistDetailView({ id }: Props) {
         onDragEnd={handleDragEnd}
         onDragCancel={() => setActiveTrack(null)}
       >
+        {/* ─── スティッキーコンパクトヘッダー ─── */}
+        <div
+          className="sticky top-0 z-20 -mx-4 md:-mx-8 px-4 md:px-8 py-2 transition-all duration-300"
+          style={{
+            background: showStickyHeader ? "rgba(10,10,20,0.95)" : "transparent",
+            backdropFilter: showStickyHeader ? "blur(12px)" : "none",
+            WebkitBackdropFilter: showStickyHeader ? "blur(12px)" : "none",
+            borderBottom: showStickyHeader ? "1px solid rgba(255,255,255,0.06)" : "none",
+            opacity: showStickyHeader ? 1 : 0,
+            pointerEvents: showStickyHeader ? "auto" : "none",
+          }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="relative w-8 h-8 rounded shrink-0 overflow-hidden"
+              style={{ background: coverColor }}
+            >
+              {playlist?.imageUrl && (
+                <Image
+                  src={playlist.imageUrl}
+                  alt={playlist.name}
+                  fill
+                  sizes="32px"
+                  className="object-cover"
+                />
+              )}
+            </div>
+            <span className="font-[family-name:var(--font-syne)] font-bold text-base text-white truncate flex-1">
+              {playlist?.name}
+            </span>
+            <button
+              type="button"
+              onClick={() => setIsAddingTrack((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+              style={{ background: "#7c6af7", color: "white" }}
+            >
+              <ListPlus size={13} />
+              曲を追加
+            </button>
+          </div>
+        </div>
+
         <div className="space-y-0 animate-fade-in">
           {/* ─── ヒーローヘッダー ─── */}
           <div
+            ref={heroRef}
             className="-mx-4 md:-mx-8 px-4 md:px-8 pt-8 pb-6"
             style={{
               background: `linear-gradient(180deg, ${heroBaseColor}33 0%, ${heroBaseColor}11 50%, transparent 100%)`,
@@ -908,13 +978,16 @@ export function PlaylistDetailView({ id }: Props) {
 
           {/* ─── アクションバー ─── */}
           <div className="flex items-center gap-3 pt-6 pb-2 flex-wrap">
-            {/* メイン再生ボタン */}
+            {/* 曲を追加ボタン（トグル） */}
             <button
               type="button"
-              onClick={() => setIsAddingTrack(true)}
+              onClick={() => setIsAddingTrack((v) => !v)}
               className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95"
-              style={{ background: "#7c6af7" }}
-              title="曲を追加"
+              style={{
+                background: isAddingTrack ? "rgba(124,106,247,0.7)" : "#7c6af7",
+                boxShadow: isAddingTrack ? "0 0 0 2px rgba(124,106,247,0.4)" : "none",
+              }}
+              title={isAddingTrack ? "検索を閉じる" : "曲を追加"}
             >
               <ListPlus size={20} className="text-white" />
             </button>
@@ -970,6 +1043,15 @@ export function PlaylistDetailView({ id }: Props) {
               <Trash2 size={13} />
             </button>
           </div>
+
+          {/* ─── インライントラック検索 ─── */}
+          {isAddingTrack && (
+            <InlineTrackSearch
+              playlistId={id}
+              playlist={playlist}
+              onClose={() => setIsAddingTrack(false)}
+            />
+          )}
 
           {/* ─── コンテンツリスト ─── */}
           {hasContent ? (
@@ -1045,15 +1127,6 @@ export function PlaylistDetailView({ id }: Props) {
             <CreatePlaylistModal
               parentId={id}
               onClose={() => setIsAddingChild(false)}
-            />
-          )}
-
-          {/* 曲を追加モーダル */}
-          {isAddingTrack && (
-            <AddTrackModal
-              playlistId={id}
-              playlist={playlist}
-              onClose={() => setIsAddingTrack(false)}
             />
           )}
 

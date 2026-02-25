@@ -337,6 +337,13 @@
 - [x] PlaylistTreeNode.tsx: アイコン 32px、ホバー白/7%、選択テキスト white、行高さ py-2
 - [x] PlaylistSidebar.tsx: 「マイライブラリ」ヘッダー、「プレイリスト」セクションラベル、閉じ時ボタン w-10
 
+## UX 改善 3機能（完了）
+- [x] InlineTrackSearch.tsx: 新規作成（AddTrackModal の非モーダル版、インラインパネル形式）
+- [x] PlaylistDetailView.tsx: AddTrackModal → InlineTrackSearch に置き換え（アクションバー直下にインライン表示、ListPlus ボタンはトグル動作）
+- [x] PlaylistDetailView.tsx: heroRef + IntersectionObserver でヒーロースクロールアウト時にスティッキーコンパクトヘッダーを表示
+- [x] PlaylistDetailView.tsx: isError 時に refetch() を呼ぶ「再試行」ボタンを追加（RefreshCw アイコン）
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## Codex レビュー対応 — 2026-02-25 00:11:56
 - [x] Issue: `AbortSignal.timeout` がタイムアウトした場合の abort エラーが未処理 → `.catch((): null => null)` で null に変換し `Result` として返すよう修正
   - `refreshAccessToken`: タイムアウト時に `{ ok: false, error: "...", status: 504 }` を返す
