@@ -433,3 +433,11 @@ Issues: none found in the latest commit diff (favicon/OGP updates and new icon.s
 Suggestions: add a PNG apple-touch-icon since iOS doesn’t support SVG, and verify /icon.svg is actually served from app/ (otherwise move to public/ or use Next’s icon metadata); Positives: metadata/icons and manifest are now explicit, and the OG image branding is consistent.
 
 > ステータス: 対応完了（Issues なし）
+
+---
+
+## Codex レビュー — 2026-02-25 16:32:18
+
+Unstaged/staged: none; Issues: none found. Suggestions: verify interactive child controls (buttons/links) inside draggable rows still behave correctly now that listeners are on the outer elements—consider opting those controls out of DnD if any regressions appear. Positives: larger drag targets improve UX, cursor feedback is consistent, and pointer-events-none on the grip avoids stealing clicks.
+
+> ステータス: 対応完了（Issues なし）

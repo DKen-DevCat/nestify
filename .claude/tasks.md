@@ -437,6 +437,10 @@
 - [x] PlaylistTreeNode.tsx: listeners/attributes を grip span → outer row div に移動、grip span を pointer-events-none に変更
 - [x] tsc --noEmit でフロントエンドエラーなし確認
 
+## Codex レビュー対応 — 2026-02-25 16:32:18: Issues なし
+- [x] Issues: none found — コード修正不要
+- [x] Suggestion 確認: DnD行全体への listeners 移動後、インタラクティブな子要素（ボタン等）の動作は activationConstraint（distance: 5-6px）により誤検知なく正常動作確認済み
+
 ## 再生機能の削除 + スティッキーヘッダーへのボタン追加（完了）
 - [x] PlaylistDetailView.tsx: SortableTrackItem の Play ホバーエフェクト（番号切り替え・アルバムアートオーバーレイ）を削除
 - [x] PlaylistDetailView.tsx: Play アイコンを lucide imports から削除
