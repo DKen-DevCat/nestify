@@ -476,3 +476,13 @@ Issues: sticky header now only updates on scroll (no resize/viewport change hand
 Suggestions/positives: consider adding resize handling (resize listener/ResizeObserver) and restricting row click to non-interactive regions; good use of stopPropagation on the add button, click-outside close, and replacing IntersectionObserver to avoid layout-shift loops.
 
 > ステータス: 対応完了（resize リスナー追加・TrackRow 行クリックのインタラクティブ要素除外）
+
+---
+
+## Codex レビュー — 2026-02-25 20:02:35
+
+Unstaged changes: none; staged changes: none; latest commit updates .claude/tasks.md and PlaylistDetailView.tsx (DnD logic additions).  
+Issues: handleDragEnd derives sourceContainerId from trackToContainer built on displayContainerItems (now localContainerItems), so cross-container drops can be misclassified as same-container and skip moveTrack.  
+Suggestions: use dragSourceContainerId for source in handleDragEnd and consider mutateAsync on the existing moveTrack/reorderItems mutations for consistent error handling; Positives: dragOver now provides real-time insertion feedback and dragCancel resets source state.
+
+> ステータス: 対応完了（handleDragEnd の source 取得を trackToContainer.get(activeId) → dragSourceContainerId に変更してクロスコンテナ誤分類を修正）

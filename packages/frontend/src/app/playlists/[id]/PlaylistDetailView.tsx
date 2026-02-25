@@ -693,6 +693,12 @@ export function PlaylistDetailView({ id }: Props) {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTrack(null);
+
+    // dragSourceContainerId をローカルに保存してから state をリセットする。
+    // handleDragOver が localContainerItems を更新すると trackToContainer も更新され、
+    // active アイテムが target コンテナ側にマッピングされてしまう。
+    // そのため trackToContainer.get(activeId) では source が誤分類されうる。
+    const sourceContainerId = dragSourceContainerId;
     setDragSourceContainerId(null);
 
     if (!over || active.id === over.id) return;
@@ -700,7 +706,6 @@ export function PlaylistDetailView({ id }: Props) {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    const sourceContainerId = trackToContainer.get(activeId);
     const targetContainerId = trackToContainer.get(overId) ?? overId;
 
     if (!sourceContainerId || !targetContainerId) return;

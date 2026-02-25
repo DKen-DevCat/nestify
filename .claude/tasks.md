@@ -486,3 +486,8 @@
 ## Codex レビュー対応 — 2026-02-25 19:48:58
 - [x] Issue 1: sticky header が resize 後に stale になる → `window.resize` リスナーを追加し、スクロール時と同じ `check` 関数を呼び出す
 - [x] Issue 2: TrackRow の行クリックが他インタラクティブ要素と干渉しうる → `(e.target).closest("button, a")` チェックを追加し、ボタン・リンク上のクリックは `onAdd` を呼ばないよう修正
+
+## Codex レビュー対応 — 2026-02-25 20:02:35
+- [x] Issue: handleDragEnd が trackToContainer.get(activeId) で source を取得していたが、handleDragOver が localContainerItems を更新すると active が target コンテナにマッピングされ、クロスコンテナドロップが同一コンテナと誤分類される
+  → dragSourceContainerId をローカル変数に保存してから state をリセットし、sourceContainerId は dragSourceContainerId から取得するよう修正
+- [x] tsc --noEmit でフロントエンドエラーなし確認
