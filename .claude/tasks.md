@@ -431,6 +431,12 @@
 - [x] Suggestion 確認: PNG apple-touch-icon の追加は任意の iOS 対応改善。優先度低のため今回は対応見送り
 - [x] Suggestion 確認: /icon.svg は app/ ディレクトリに配置済みで Next.js の icon メタデータ経由で配信されるため現状維持
 
+## DnD 範囲拡張（完了）
+- [x] SortableTrackItem (PlaylistDetailView.tsx): listeners/attributes を grip span → outer li に移動、grip span を pointer-events-none に変更
+- [x] SortablePlaylistSection (PlaylistDetailView.tsx): listeners/attributes を grip span → outer div に移動、grip span を pointer-events-none に変更
+- [x] PlaylistTreeNode.tsx: listeners/attributes を grip span → outer row div に移動、grip span を pointer-events-none に変更
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## 再生機能の削除 + スティッキーヘッダーへのボタン追加（完了）
 - [x] PlaylistDetailView.tsx: SortableTrackItem の Play ホバーエフェクト（番号切り替え・アルバムアートオーバーレイ）を削除
 - [x] PlaylistDetailView.tsx: Play アイコンを lucide imports から削除

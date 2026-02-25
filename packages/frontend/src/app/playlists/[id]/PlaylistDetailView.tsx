@@ -175,13 +175,12 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
     <li
       ref={setNodeRef}
       style={style}
-      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 hover:bg-white/[0.07]"
+      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 hover:bg-white/[0.07] cursor-grab active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
     >
       <span
-        className="flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
-        {...attributes}
-        {...listeners}
-        onClick={(e) => e.stopPropagation()}
+        className="flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
       >
         <GripVertical size={12} />
       </span>
@@ -396,12 +395,13 @@ function SortablePlaylistSection({
 
   return (
     <li ref={setNodeRef} style={style} className="list-none">
-      <div className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-all duration-150 mt-1">
+      <div
+        className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-all duration-150 mt-1 cursor-grab active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
         <span
-          className="text-foreground/15 hover:text-foreground/35 cursor-grab active:cursor-grabbing shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
+          className="text-foreground/15 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
         >
           <GripVertical size={12} />
         </span>
