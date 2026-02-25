@@ -441,3 +441,11 @@ Suggestions: add a PNG apple-touch-icon since iOS doesn’t support SVG, and ver
 Unstaged/staged: none; Issues: none found. Suggestions: verify interactive child controls (buttons/links) inside draggable rows still behave correctly now that listeners are on the outer elements—consider opting those controls out of DnD if any regressions appear. Positives: larger drag targets improve UX, cursor feedback is consistent, and pointer-events-none on the grip avoids stealing clicks.
 
 > ステータス: 対応完了（Issues なし）
+
+---
+
+## Codex レビュー — 2026-02-25 16:34:00
+
+Unstaged/staged: none; latest commit touches only .claude/plan.md and .claude/tasks.md with added Codex review notes. Issues: none found. Suggestions: confirm .claude documentation updates are desired to keep history clean; Positives: review/status records are clear and neatly appended.
+
+> ステータス: 対応完了（Issues なし）

@@ -449,3 +449,7 @@
 - [x] PlaylistsLayoutClient.tsx: NowPlayingBar の参照を削除（前セッション済み）
 - [x] PlaylistDetailView.tsx: スティッキーヘッダーにサブPL / Spotifyへ書き出し / Spotifyで開く ボタンを追加（前セッション済み）
 - [x] tsc --noEmit でフロントエンドエラーなし確認
+
+## Codex レビュー対応 — 2026-02-25 16:34:00: Issues なし
+- [x] Issues: none found — コード修正不要
+- [x] Suggestion 確認: .claude ドキュメントのコミットは意図的な運用として維持
