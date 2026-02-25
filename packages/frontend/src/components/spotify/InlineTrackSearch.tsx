@@ -688,7 +688,11 @@ function TrackRow({ track, index, added, disabled, onAdd }: TrackRowProps) {
   return (
     <li
       className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer"
-      onClick={() => { if (!added && !disabled) onAdd(); }}
+      onClick={(e) => {
+        // ボタン・アンカー等のインタラクティブ要素のクリックは伝播させない
+        if ((e.target as HTMLElement).closest("button, a")) return;
+        if (!added && !disabled) onAdd();
+      }}
     >
       {index !== undefined && (
         <span

@@ -605,8 +605,12 @@ export function PlaylistDetailView({ id }: Props) {
     };
 
     scrollContainer.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check, { passive: true });
     check(); // 初回チェック
-    return () => scrollContainer.removeEventListener("scroll", check);
+    return () => {
+      scrollContainer.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+    };
   }, []);
 
   const displayContainerItems = localContainerItems ?? serverContainerItems;

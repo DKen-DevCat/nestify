@@ -475,3 +475,7 @@
 ## Codex レビュー対応 — 2026-02-25 19:33:19: Issues なし
 - [x] Issues: none observed — コード修正不要
 - [x] スティッキーヘッダーへの InlineTrackSearch 追加と tasks.md 更新が対象コミット
+
+## Codex レビュー対応 — 2026-02-25 19:48:58
+- [x] Issue 1: sticky header が resize 後に stale になる → `window.resize` リスナーを追加し、スクロール時と同じ `check` 関数を呼び出す
+- [x] Issue 2: TrackRow の行クリックが他インタラクティブ要素と干渉しうる → `(e.target).closest("button, a")` チェックを追加し、ボタン・リンク上のクリックは `onAdd` を呼ばないよう修正
