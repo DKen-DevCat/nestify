@@ -383,6 +383,17 @@
 - [x] Issues: none found — コード修正不要
 - [x] Suggestion 確認: icon-only ボタンへの `aria-label` 追加は任意のアクセシビリティ改善。優先度低のため今回は対応見送り
 
+## 検索バーを常時表示に変更（完了）
+- [x] InlineTrackSearch.tsx: onClose prop を削除、外側カードを廃止
+- [x] InlineTrackSearch.tsx: 検索バーを常時表示（空状態はシンプルなバー、入力後に結果パネル展開）
+- [x] InlineTrackSearch.tsx: X ボタンはクリアボタンに変更（query をクリア → 結果パネルが閉じる）
+- [x] PlaylistDetailView.tsx: isAddingTrack state を削除
+- [x] PlaylistDetailView.tsx: ListPlus トグルボタン（ヒーロー + スティッキー両方）を削除
+- [x] PlaylistDetailView.tsx: InlineTrackSearch を常時レンダリングに変更（isAddingTrack ガード撤去）
+- [x] PlaylistDetailView.tsx: 空状態の「曲を追加」ボタン削除、説明文を更新
+- [x] スケルトン UI の ListPlus 円形ボタン行を削除
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## 再生機能の削除 + スティッキーヘッダーへのボタン追加（完了）
 - [x] PlaylistDetailView.tsx: SortableTrackItem の Play ホバーエフェクト（番号切り替え・アルバムアートオーバーレイ）を削除
 - [x] PlaylistDetailView.tsx: Play アイコンを lucide imports から削除

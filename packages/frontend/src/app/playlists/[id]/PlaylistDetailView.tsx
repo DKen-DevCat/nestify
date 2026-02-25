@@ -36,7 +36,7 @@ import {
   Upload,
   ExternalLink,
   GripVertical,
-  ListPlus,
+
   ChevronDown,
   ChevronRight,
   Pencil,
@@ -530,7 +530,6 @@ export function PlaylistDetailView({ id }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isAddingChild, setIsAddingChild] = useState(false);
-  const [isAddingTrack, setIsAddingTrack] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [exportedUrls, setExportedUrls] = useState<
     Record<string, { spotifyPlaylistId: string; url: string }>
@@ -848,17 +847,6 @@ export function PlaylistDetailView({ id }: Props) {
               </span>
               {/* アクションボタン群 */}
               <div className="flex items-center gap-1.5 shrink-0">
-                {/* 曲を追加 */}
-                <button
-                  type="button"
-                  onClick={() => setIsAddingTrack((v) => !v)}
-                  title="曲を追加"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ background: "#7c6af7", color: "white" }}
-                >
-                  <ListPlus size={13} />
-                  <span className="hidden sm:inline">曲を追加</span>
-                </button>
                 {/* サブPL */}
                 <button
                   type="button"
@@ -996,20 +984,6 @@ export function PlaylistDetailView({ id }: Props) {
 
           {/* ─── アクションバー ─── */}
           <div className="flex items-center gap-3 pt-6 pb-2 flex-wrap">
-            {/* 曲を追加ボタン（トグル） */}
-            <button
-              type="button"
-              onClick={() => setIsAddingTrack((v) => !v)}
-              className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95"
-              style={{
-                background: isAddingTrack ? "rgba(124,106,247,0.7)" : "#7c6af7",
-                boxShadow: isAddingTrack ? "0 0 0 2px rgba(124,106,247,0.4)" : "none",
-              }}
-              title={isAddingTrack ? "検索を閉じる" : "曲を追加"}
-            >
-              <ListPlus size={20} className="text-white" />
-            </button>
-
             <ActionButton
               icon={<Plus size={14} />}
               label="サブPL"
@@ -1062,14 +1036,11 @@ export function PlaylistDetailView({ id }: Props) {
             </button>
           </div>
 
-          {/* ─── インライントラック検索 ─── */}
-          {isAddingTrack && (
-            <InlineTrackSearch
-              playlistId={id}
-              playlist={playlist}
-              onClose={() => setIsAddingTrack(false)}
-            />
-          )}
+          {/* ─── インライントラック検索（常時表示） ─── */}
+          <InlineTrackSearch
+            playlistId={id}
+            playlist={playlist}
+          />
 
           {/* ─── コンテンツリスト ─── */}
           {hasContent ? (
@@ -1121,21 +1092,9 @@ export function PlaylistDetailView({ id }: Props) {
                 <div>
                   <p className="text-white/50 text-base font-medium">このプレイリストは空です</p>
                   <p className="text-white/30 text-sm mt-1">
-                    「曲を追加」から楽曲を追加するか、サブプレイリストを作成してください
+                    上の検索バーから楽曲を追加するか、サブプレイリストを作成してください
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsAddingTrack(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-colors duration-150"
-                  style={{
-                    border: "1px solid rgba(124,106,247,0.3)",
-                    color: "#7c6af7",
-                  }}
-                >
-                  <Plus size={14} />
-                  曲を追加
-                </button>
               </div>
             </div>
           )}
@@ -1244,8 +1203,6 @@ function PlaylistDetailSkeleton() {
 
       {/* ─── アクションバー（実コンテンツと同一クラス） ─── */}
       <div className="flex items-center gap-3 pt-6 pb-2 flex-wrap">
-        {/* ListPlus 円形ボタン */}
-        <Skeleton className="w-12 h-12 rounded-full shrink-0" />
         {/* サブPL / Spotify書き出し / Spotifyで開く の pill ボタン */}
         <Skeleton className="h-7 w-16 rounded-full" />
         <Skeleton className="h-7 w-36 rounded-full" />
