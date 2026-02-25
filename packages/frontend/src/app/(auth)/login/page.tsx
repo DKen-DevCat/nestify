@@ -64,17 +64,26 @@ export default function LoginPage() {
       <div className="relative z-10 text-center flex flex-col items-center gap-10 animate-fade-in-up px-6">
         {/* ロゴ */}
         <div className="space-y-3">
-          <div className="flex items-center justify-center mb-2">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-4"
-              style={{
-                background: "linear-gradient(135deg, rgba(124,106,247,0.2), rgba(247,106,138,0.2))",
-                border: "1px solid rgba(124,106,247,0.3)",
-                boxShadow: "0 0 30px rgba(124,106,247,0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
-              }}
+          <div className="flex items-center justify-center mb-6">
+            <svg
+              width="56"
+              height="56"
+              viewBox="0 0 32 32"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ boxShadow: "0 0 32px rgba(124,106,247,0.45)", borderRadius: "14px" }}
             >
-              🌿
-            </div>
+              <defs>
+                <linearGradient id="logo-bg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#7c6af7" />
+                  <stop offset="1" stopColor="#f76a8a" />
+                </linearGradient>
+              </defs>
+              <rect width="32" height="32" rx="8" fill="url(#logo-bg)" />
+              <rect x="6"  y="8"    width="20" height="3.5" rx="1.75" fill="white" opacity="0.95" />
+              <rect x="10" y="14.5" width="14" height="3"   rx="1.5"  fill="white" opacity="0.75" />
+              <rect x="14" y="20.5" width="9"  height="3"   rx="1.5"  fill="white" opacity="0.55" />
+            </svg>
           </div>
           <h1
             className="font-[family-name:var(--font-syne)] text-6xl font-bold tracking-tight text-gradient"
