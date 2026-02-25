@@ -378,3 +378,12 @@
 - [x] Issues: none found — コード修正不要
 - [x] Suggestion 確認: `aria-hidden` を Skeleton に追加することは任意のアクセシビリティ改善。優先度低のため今回は対応見送り
 - [x] Suggestion 確認: スケルトン行設定のレンダー外ホイストは任意の最適化。現状で十分と判断、維持
+
+## 再生機能の削除 + スティッキーヘッダーへのボタン追加（完了）
+- [x] PlaylistDetailView.tsx: SortableTrackItem の Play ホバーエフェクト（番号切り替え・アルバムアートオーバーレイ）を削除
+- [x] PlaylistDetailView.tsx: Play アイコンを lucide imports から削除
+- [x] playerStore.ts を削除
+- [x] NowPlayingBar.tsx を削除
+- [x] PlaylistsLayoutClient.tsx: NowPlayingBar の参照を削除（前セッション済み）
+- [x] PlaylistDetailView.tsx: スティッキーヘッダーにサブPL / Spotifyへ書き出し / Spotifyで開く ボタンを追加（前セッション済み）
+- [x] tsc --noEmit でフロントエンドエラーなし確認

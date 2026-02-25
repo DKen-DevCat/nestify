@@ -40,7 +40,6 @@ import {
   ChevronDown,
   ChevronRight,
   Pencil,
-  Play,
   RefreshCw,
 } from "lucide-react";
 import Image from "next/image";
@@ -51,7 +50,6 @@ import {
   useDeletePlaylist,
   useUpdatePlaylist,
 } from "@/hooks/usePlaylistMutations";
-import { usePlayerStore } from "@/stores/playerStore";
 import { api } from "@/lib/api";
 import { InlineTrackSearch } from "@/components/spotify/InlineTrackSearch";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -157,9 +155,6 @@ interface SortableTrackItemProps {
 }
 
 function SortableTrackItem({ track, index }: SortableTrackItemProps) {
-  const { playTrack, currentTrack } = usePlayerStore();
-  const isActive = currentTrack?.id === track.track?.id;
-
   const {
     attributes,
     listeners,
@@ -176,18 +171,11 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
     zIndex: isDragging ? 10 : undefined,
   };
 
-  const handlePlay = () => {
-    if (track.track) {
-      playTrack(track.track, track.playlistId);
-    }
-  };
-
   return (
     <li
       ref={setNodeRef}
       style={style}
-      onClick={handlePlay}
-      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 cursor-pointer hover:bg-white/[0.07]"
+      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 hover:bg-white/[0.07]"
     >
       <span
         className="flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
@@ -198,16 +186,9 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
         <GripVertical size={12} />
       </span>
 
-      {/* 番号 / 再生アイコン切り替え */}
-      <span className="relative w-6 h-6 flex items-center justify-center">
-        <span className="text-xs font-[family-name:var(--font-space-mono)] group-hover:opacity-0 transition-opacity duration-150 absolute inset-0 flex items-center justify-center" style={{ color: "#b3b3b3" }}>
-          {index + 1}
-        </span>
-        <Play
-          size={13}
-          fill="currentColor"
-          className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute inset-0 m-auto"
-        />
+      {/* 番号 */}
+      <span className="w-6 h-6 flex items-center justify-center text-xs font-[family-name:var(--font-space-mono)]" style={{ color: "#b3b3b3" }}>
+        {index + 1}
       </span>
 
       <div className="flex items-center gap-3 min-w-0">
@@ -228,16 +209,9 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
               <Music2 size={12} className="text-foreground/20" />
             </div>
           )}
-          {/* ホバーオーバーレイ */}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center">
-            <Play size={12} fill="white" className="text-white translate-x-px" />
-          </div>
         </div>
         <div className="min-w-0">
-          <p
-            className="text-sm font-medium truncate transition-colors duration-150"
-            style={{ color: isActive ? "#7c6af7" : undefined }}
-          >
+          <p className="text-sm font-medium truncate transition-colors duration-150">
             {track.track?.name ?? track.spotifyTrackId}
           </p>
           <p className="text-xs truncate" style={{ color: "#b3b3b3" }}>
@@ -320,19 +294,9 @@ function DragOverlayTrackItem({ track }: { track: TrackWithSource }) {
 // ---------------------------------------------------------------------------
 
 function SimpleTrackItem({ track, index }: { track: TrackWithSource; index: number }) {
-  const { playTrack, currentTrack } = usePlayerStore();
-  const isActive = currentTrack?.id === track.track?.id;
-
-  const handlePlay = () => {
-    if (track.track) {
-      playTrack(track.track, track.playlistId);
-    }
-  };
-
   return (
     <li
-      onClick={handlePlay}
-      className="group grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-lg items-center cursor-pointer hover:bg-white/[0.04] transition-all duration-150"
+      className="group grid grid-cols-[auto_1fr_1fr_auto] gap-3 px-3 py-1.5 rounded-lg items-center hover:bg-white/[0.04] transition-all duration-150"
     >
       <span className="w-6 text-center text-foreground/25 text-xs font-[family-name:var(--font-space-mono)] group-hover:text-foreground/40 transition-colors">
         {index + 1}
@@ -355,10 +319,7 @@ function SimpleTrackItem({ track, index }: { track: TrackWithSource; index: numb
           )}
         </div>
         <div className="min-w-0">
-          <p
-            className="text-sm font-medium truncate transition-colors"
-            style={{ color: isActive ? "#7c6af7" : undefined }}
-          >
+          <p className="text-sm font-medium truncate">
             {track.track?.name ?? track.spotifyTrackId}
           </p>
           <p className="text-xs text-foreground/40 truncate">
@@ -865,7 +826,8 @@ export function PlaylistDetailView({ id }: Props) {
               borderBottom: "1px solid rgba(255,255,255,0.06)",
             }}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              {/* カバー縮小版 */}
               <div
                 className="relative w-8 h-8 rounded shrink-0 overflow-hidden"
                 style={{ background: coverColor }}
@@ -880,18 +842,77 @@ export function PlaylistDetailView({ id }: Props) {
                   />
                 )}
               </div>
-              <span className="font-[family-name:var(--font-syne)] font-bold text-base text-white truncate flex-1">
+              {/* プレイリスト名 */}
+              <span className="font-[family-name:var(--font-syne)] font-bold text-sm text-white truncate flex-1 min-w-0">
                 {playlist?.name}
               </span>
-              <button
-                type="button"
-                onClick={() => setIsAddingTrack((v) => !v)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
-                style={{ background: "#7c6af7", color: "white" }}
-              >
-                <ListPlus size={13} />
-                曲を追加
-              </button>
+              {/* アクションボタン群 */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* 曲を追加 */}
+                <button
+                  type="button"
+                  onClick={() => setIsAddingTrack((v) => !v)}
+                  title="曲を追加"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ background: "#7c6af7", color: "white" }}
+                >
+                  <ListPlus size={13} />
+                  <span className="hidden sm:inline">曲を追加</span>
+                </button>
+                {/* サブPL */}
+                <button
+                  type="button"
+                  onClick={() => setIsAddingChild(true)}
+                  title="サブプレイリストを追加"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: "rgba(232,230,240,0.7)",
+                    background: "rgba(255,255,255,0.03)",
+                  }}
+                >
+                  <Plus size={13} />
+                  <span className="hidden sm:inline">サブPL</span>
+                </button>
+                {/* Spotify へ書き出し */}
+                <button
+                  type="button"
+                  onClick={() => exportPlaylist()}
+                  disabled={isExporting}
+                  title="Spotify へ書き出し"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: "rgba(232,230,240,0.7)",
+                    background: "rgba(255,255,255,0.03)",
+                  }}
+                >
+                  {isExporting ? (
+                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Upload size={13} />
+                  )}
+                  <span className="hidden sm:inline">書き出し</span>
+                </button>
+                {/* Spotify で開く（書き出し後のみ） */}
+                {exportedUrls[id] && (
+                  <a
+                    href={exportedUrls[id].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Spotify で開く"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all hover:scale-[1.02]"
+                    style={{
+                      border: "1px solid rgba(106,247,200,0.3)",
+                      color: "#6af7c8",
+                      background: "rgba(106,247,200,0.06)",
+                    }}
+                  >
+                    <ExternalLink size={13} />
+                    <span className="hidden sm:inline">開く</span>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { PlaylistSidebar } from "./PlaylistSidebar";
-import { NowPlayingBar } from "@/components/player/NowPlayingBar";
 
 export function PlaylistsLayoutClient({
   children,
@@ -61,8 +60,6 @@ export function PlaylistsLayoutClient({
         </main>
       </div>
 
-      {/* 下部固定の再生バー */}
-      <NowPlayingBar />
     </div>
   );
 }
