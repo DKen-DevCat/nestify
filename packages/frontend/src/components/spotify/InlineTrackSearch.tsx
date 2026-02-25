@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, Search, Plus, Check, Music2, Loader2, ChevronLeft, Disc3 } from "lucide-react";
 import Image from "next/image";
@@ -41,6 +41,7 @@ export function InlineTrackSearch({ playlistId, playlist }: Props) {
   const [isAddingAll, setIsAddingAll] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   const isExpanded = query.length > 0;
@@ -78,6 +79,18 @@ export function InlineTrackSearch({ playlistId, playlist }: Props) {
   useEffect(() => {
     if (query.length === 0) setSelectedAlbum(null);
   }, [query]);
+
+  // 枠外クリックで結果パネルを閉じる
+  const handleClose = useCallback(() => setQuery(""), []);
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        handleClose();
+      }
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [handleClose]);
 
   // ── トラック検索 ──────────────────────────────────────────────────────────
 
@@ -195,7 +208,7 @@ export function InlineTrackSearch({ playlistId, playlist }: Props) {
   // ---------------------------------------------------------------------------
 
   return (
-    <div className="mb-4">
+    <div ref={containerRef} className="mb-4">
       {/* ─── 常時表示の検索バー ─── */}
       <div
         className="flex items-center gap-2 px-4 py-2.5 transition-colors duration-150"
@@ -673,7 +686,10 @@ interface TrackRowProps {
 
 function TrackRow({ track, index, added, disabled, onAdd }: TrackRowProps) {
   return (
-    <li className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group">
+    <li
+      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer"
+      onClick={() => { if (!added && !disabled) onAdd(); }}
+    >
       {index !== undefined && (
         <span
           className="text-xs w-4 text-center shrink-0 font-[family-name:var(--font-space-mono)]"
@@ -719,7 +735,7 @@ function TrackRow({ track, index, added, disabled, onAdd }: TrackRowProps) {
       {/* 追加ボタン */}
       <button
         type="button"
-        onClick={onAdd}
+        onClick={(e) => { e.stopPropagation(); onAdd(); }}
         disabled={added || disabled}
         className={[
           "shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all",

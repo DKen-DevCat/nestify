@@ -454,6 +454,12 @@
 - [x] PlaylistDetailView.tsx: スティッキーヘッダーにサブPL / Spotifyへ書き出し / Spotifyで開く ボタンを追加（前セッション済み）
 - [x] tsc --noEmit でフロントエンドエラーなし確認
 
+## 検索UX改善 + sticky バグ修正（完了）
+- [x] InlineTrackSearch: TrackRow <li> に onClick を追加（行クリックで曲追加）
+- [x] InlineTrackSearch: containerRef + mousedown で枠外クリック時に query をクリア（パネルを閉じる）
+- [x] PlaylistDetailView: IntersectionObserver → scroll イベント + getBoundingClientRect に切り替え（sticky 干渉バグ修正）
+- [x] tsc --noEmit でフロントエンドエラーなし確認
+
 ## スティッキーヘッダーに検索バーを追加（完了）
 - [x] PlaylistDetailView.tsx: スティッキーヘッダー内に InlineTrackSearch を追加（row 2）
 - [x] tsc --noEmit でフロントエンドエラーなし確認

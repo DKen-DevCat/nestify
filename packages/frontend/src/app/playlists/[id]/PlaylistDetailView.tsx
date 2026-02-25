@@ -590,15 +590,23 @@ export function PlaylistDetailView({ id }: Props) {
   }, [serverContainerItems]);
 
   // ヒーローセクションがスクロールアウトしたらスティッキーヘッダーを表示
+  // IntersectionObserver は DOM 挿入時のレイアウトシフトでループするため
+  // scroll イベント + getBoundingClientRect に切り替え
   useEffect(() => {
     const el = heroRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setShowStickyHeader(!entry.isIntersecting),
-      { threshold: 0 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+    const scrollContainer = el.closest("main") as HTMLElement | null;
+    if (!scrollContainer) return;
+
+    const check = () => {
+      const heroBottom = el.getBoundingClientRect().bottom;
+      const containerTop = scrollContainer.getBoundingClientRect().top;
+      setShowStickyHeader(heroBottom <= containerTop);
+    };
+
+    scrollContainer.addEventListener("scroll", check, { passive: true });
+    check(); // 初回チェック
+    return () => scrollContainer.removeEventListener("scroll", check);
   }, []);
 
   const displayContainerItems = localContainerItems ?? serverContainerItems;
