@@ -517,3 +517,7 @@
 - [x] globals.css: .scrollable-area ユーティリティ追加（モバイルのみ overflow-y:scroll / scrollbar-width:thin）
 - [x] PlaylistSidebar.tsx / PlaylistsLayoutClient.tsx: .scrollable-area クラスを付与
 - [x] tsc --noEmit でフロントエンドエラーなし確認
+
+## Codex レビュー対応 — 2026-02-27 19:49:12: Issues なし
+- [x] Issues: none — コード修正不要
+- [x] Suggestion 確認: .claude/plan.md / .claude/tasks.md のコミットはトレーサビリティのため現在の方針（コミットに含める）を維持
