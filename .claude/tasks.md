@@ -500,6 +500,14 @@
 - [x] Issues: none — コード修正不要
 - [x] Suggestion 確認: .claude/plan.md / .claude/tasks.md のコミットはトレーサビリティのため現在の方針（コミットに含める）を維持
 
+## Codex レビュー対応 — 2026-02-25 20:42:15: Issues なし
+- [x] Issues: none — コード修正不要
+- [x] Suggestion 確認: .claude/plan.md / .claude/tasks.md のコミットはトレーサビリティのため現在の方針（コミットに含める）を維持
+
+## Codex レビュー対応 — 2026-02-25 20:45:17: Issues なし
+- [x] Issues: none — コード修正不要
+- [x] Suggestion 確認: .claude/plan.md / .claude/tasks.md のコミットはトレーサビリティのため現在の方針（コミットに含める）を維持
+
 ## モバイル DnD / スクロール競合修正（完了）
 - [x] PlaylistDetailView.tsx: SortableTrackItem の listeners を grip span に移動、outer li に touch-pan-y / grip に touch-none + md:opacity-0 md:group-hover:opacity-100
 - [x] PlaylistDetailView.tsx: SortablePlaylistSection の listeners を grip span に移動、同上パターン
