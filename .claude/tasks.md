@@ -526,6 +526,11 @@
 - [x] Issue: tasks.md の ANSI エスケープシーケンス（`\u001b[m`）を確認 → バイナリ検索の結果、現ファイルには存在しない（前コミット時点で解消済み）
 - [x] plan.md のステータスを「対応完了」に更新
 
+## Codex レビュー対応 — 2026-02-27 20:17:05: Issues なし
+- [x] Issues: none obvious — コード修正不要
+- [x] Suggestion 確認: Spotify failure path のテスト追加は今後の課題。現時点では 13 テスト全通過確認済み
+- [x] Suggestion 確認: AbortSignal.timeout の Bun ランタイムサポートは Web APIs 準拠のため対応済み
+
 ## Spotify Export バグ修正
 - [x] track POST（既存更新パス・新規作成パスの両方）のレスポンスを検証し、失敗時に ok:false を返すよう修正
 - [x] 全 Spotify API fetch に AbortSignal.timeout(10_000) を追加
