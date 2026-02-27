@@ -84,7 +84,7 @@ export function PlaylistTreeNode({
 
       <div
         className={[
-          "group relative flex items-center gap-1 py-2 rounded-lg cursor-grab active:cursor-grabbing",
+          "group relative flex items-center gap-1 py-2 rounded-lg cursor-default touch-pan-y",
           "transition-all duration-150",
           isSelected
             ? "text-white"
@@ -103,11 +103,12 @@ export function PlaylistTreeNode({
         onClick={handleSelect}
         onMouseEnter={handleMouseEnter}
         {...attributes}
-        {...listeners}
       >
-        {/* ドラッグハンドル（視覚的インジケーターのみ） */}
+        {/* ドラッグハンドル（グリップのみでドラッグ開始） */}
         <span
-          className="shrink-0 w-4 h-4 flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+          className="shrink-0 w-4 h-4 flex items-center justify-center text-foreground/20 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical size={12} />
         </span>

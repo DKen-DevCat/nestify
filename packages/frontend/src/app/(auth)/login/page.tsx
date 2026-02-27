@@ -85,6 +85,7 @@ export default function LoginPage() {
               <rect x="14" y="20.5" width="9"  height="3"   rx="1.5"  fill="white" opacity="0.55" />
             </svg>
           </div>
+
           <h1
             className="font-[family-name:var(--font-syne)] text-6xl font-bold tracking-tight text-gradient"
           >

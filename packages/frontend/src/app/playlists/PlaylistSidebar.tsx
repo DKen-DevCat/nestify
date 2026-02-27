@@ -147,7 +147,7 @@ export function PlaylistSidebar({ onNavigate }: PlaylistSidebarProps) {
         </div>
 
         {/* ツリー */}
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto scrollable-area p-2">
           {/* セクションラベル */}
           <div className="px-2 pt-2 pb-1">
             <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.3)" }}>

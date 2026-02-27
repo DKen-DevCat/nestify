@@ -14,6 +14,7 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   closestCenter,
@@ -176,12 +177,13 @@ function SortableTrackItem({ track, index }: SortableTrackItemProps) {
     <li
       ref={setNodeRef}
       style={style}
-      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 hover:bg-white/[0.07] cursor-grab active:cursor-grabbing"
+      className="group grid grid-cols-[16px_auto_1fr_1fr_auto_auto] gap-3 px-3 py-2 rounded-lg items-center transition-all duration-150 hover:bg-white/[0.07] touch-pan-y"
       {...attributes}
-      {...listeners}
     >
+      {/* グリップ: PCはhover時のみ表示、モバイルは常時表示。ここからのみDnD開始 */}
       <span
-        className="flex items-center justify-center text-foreground/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+        className="flex items-center justify-center text-foreground/20 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
+        {...listeners}
       >
         <GripVertical size={12} />
       </span>
@@ -397,12 +399,12 @@ function SortablePlaylistSection({
   return (
     <li ref={setNodeRef} style={style} className="list-none">
       <div
-        className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-all duration-150 mt-1 cursor-grab active:cursor-grabbing"
+        className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-all duration-150 mt-1 touch-pan-y"
         {...attributes}
-        {...listeners}
       >
         <span
-          className="text-foreground/15 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+          className="text-foreground/15 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
+          {...listeners}
         >
           <GripVertical size={12} />
         </span>
@@ -675,7 +677,10 @@ export function PlaylistDetailView({ id }: Props) {
   });
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    // PC: マウス移動 8px で DnD 開始
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    // モバイル: 200ms 長押し後に DnD 開始（8px 以上動いたらスクロールとみなしキャンセル）
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
   );
 
   const handleDragStart = (event: DragStartEvent) => {

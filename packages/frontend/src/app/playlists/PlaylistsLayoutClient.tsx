@@ -53,8 +53,8 @@ export function PlaylistsLayoutClient({
           </>
         )}
 
-        <main className="relative z-[1] flex-1 overflow-y-auto">
-          <div className="px-4 md:px-8 py-6">
+        <main className="relative z-[1] flex-1 overflow-y-auto scrollable-area">
+          <div className="px-4 md:px-8 pb-6">
             {children}
           </div>
         </main>

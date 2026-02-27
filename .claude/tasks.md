@@ -499,3 +499,13 @@
 ## Codex レビュー対応 — 2026-02-25 20:34:12: Issues なし
 - [x] Issues: none — コード修正不要
 - [x] Suggestion 確認: .claude/plan.md / .claude/tasks.md のコミットはトレーサビリティのため現在の方針（コミットに含める）を維持
+
+## モバイル DnD / スクロール競合修正（完了）
+- [x] PlaylistDetailView.tsx: SortableTrackItem の listeners を grip span に移動、outer li に touch-pan-y / grip に touch-none + md:opacity-0 md:group-hover:opacity-100
+- [x] PlaylistDetailView.tsx: SortablePlaylistSection の listeners を grip span に移動、同上パターン
+- [x] PlaylistDetailView.tsx: TouchSensor 追加（delay:200 / tolerance:8）、PointerSensor を distance:8 に変更
+- [x] PlaylistTreeNode.tsx: listeners を outer div → grip span に移動、touch-pan-y / touch-none / md:opacity-0 md:group-hover:opacity-100 適用
+- [x] PlaylistTree.tsx: TouchSensor 追加（同設定）
+- [x] globals.css: .scrollable-area ユーティリティ追加（モバイルのみ overflow-y:scroll / scrollbar-width:thin）
+- [x] PlaylistSidebar.tsx / PlaylistsLayoutClient.tsx: .scrollable-area クラスを付与
+- [x] tsc --noEmit でフロントエンドエラーなし確認

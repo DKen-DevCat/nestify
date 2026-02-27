@@ -66,6 +66,14 @@ body::before {
   background: rgba(124, 106, 247, 0.45);
 }
 
+/* モバイルのみ: スクロール可能エリアを常時スクロールバー表示でユーザーに示す */
+@media (hover: none) and (pointer: coarse) {
+  .scrollable-area {
+    overflow-y: scroll;
+    scrollbar-width: thin;
+  }
+}
+
 /* ─── Keyframes ─── */
 
 @keyframes shimmer {
