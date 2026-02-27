@@ -525,3 +525,10 @@
 ## Codex レビュー対応 — 2026-02-27 19:52:54
 - [x] Issue: tasks.md の ANSI エスケープシーケンス（`\u001b[m`）を確認 → バイナリ検索の結果、現ファイルには存在しない（前コミット時点で解消済み）
 - [x] plan.md のステータスを「対応完了」に更新
+
+## Spotify Export バグ修正
+- [x] track POST（既存更新パス・新規作成パスの両方）のレスポンスを検証し、失敗時に ok:false を返すよう修正
+- [x] 全 Spotify API fetch に AbortSignal.timeout(10_000) を追加
+- [x] 冗長条件 `metaRes.ok || metaRes.status === 200` → `metaRes.ok` に修正
+- [x] tsc --noEmit でバックエンドエラーなし確認
+- [x] bun test で 13 テスト全通過確認

@@ -470,11 +470,12 @@ export async function exportToSpotify(
         method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ name: playlistName, description: "Exported from Nestify" }),
+        signal: AbortSignal.timeout(10_000),
       },
     );
 
     // 404 や権限エラーの場合は新規作成にフォールバック
-    if (metaRes.ok || metaRes.status === 200) {
+    if (metaRes.ok) {
       // トラックを差し替え（PUT = 全置換、100件まで）
       const replaceRes = await fetch(
         `https://api.spotify.com/v1/playlists/${existingSpotifyId}/tracks`,
@@ -482,17 +483,30 @@ export async function exportToSpotify(
           method: "PUT",
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify({ uris: uris.slice(0, 100) }),
+          signal: AbortSignal.timeout(10_000),
         },
       );
 
       if (replaceRes.ok) {
         // 101件目以降を追加（POST = append）
         for (let i = 100; i < uris.length; i += 100) {
-          await fetch(`https://api.spotify.com/v1/playlists/${existingSpotifyId}/tracks`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ uris: uris.slice(i, i + 100) }),
-          });
+          const appendRes = await fetch(
+            `https://api.spotify.com/v1/playlists/${existingSpotifyId}/tracks`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+              body: JSON.stringify({ uris: uris.slice(i, i + 100) }),
+              signal: AbortSignal.timeout(10_000),
+            },
+          );
+          if (!appendRes.ok) {
+            const body = await appendRes.text().catch(() => "");
+            return {
+              ok: false,
+              error: `Failed to append tracks to Spotify playlist (${appendRes.status})${body ? `: ${body.slice(0, 100)}` : ""}`,
+              status: 500,
+            };
+          }
         }
 
         return {
@@ -512,6 +526,7 @@ export async function exportToSpotify(
   // --- 新規 Spotify プレイリストを作成 ---
   const meRes = await fetch("https://api.spotify.com/v1/me", {
     headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(10_000),
   });
   if (!meRes.ok) {
     return { ok: false, error: "Failed to get Spotify user", status: 500 };
@@ -528,6 +543,7 @@ export async function exportToSpotify(
         description: "Exported from Nestify",
         public: false,
       }),
+      signal: AbortSignal.timeout(10_000),
     },
   );
 
@@ -542,11 +558,23 @@ export async function exportToSpotify(
 
   // トラックを 100 件ずつ追加
   for (let i = 0; i < uris.length; i += 100) {
-    await fetch(`https://api.spotify.com/v1/playlists/${created.id}/tracks`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ uris: uris.slice(i, i + 100) }),
-    });
+    const addRes = await fetch(
+      `https://api.spotify.com/v1/playlists/${created.id}/tracks`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ uris: uris.slice(i, i + 100) }),
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+    if (!addRes.ok) {
+      const body = await addRes.text().catch(() => "");
+      return {
+        ok: false,
+        error: `Failed to add tracks to new Spotify playlist (${addRes.status})${body ? `: ${body.slice(0, 100)}` : ""}`,
+        status: 500,
+      };
+    }
   }
 
   // 作成した spotifyPlaylistId を DB に保存（次回以降は更新として処理）
