@@ -213,3 +213,41 @@ describe("getTracksRecursive", () => {
     expect(Array.isArray(result.data)).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// moveTrack
+// ---------------------------------------------------------------------------
+describe("moveTrack", () => {
+  it("source を指定して別プレイリストへ移動できる", async () => {
+    const result = await service.moveTrack(
+      "track-001",
+      "pl-002",
+      "pl-003",
+      1,
+      "any_user",
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.data.moved).toBe(true);
+
+    const moved = mockData.MOCK_TRACKS.find((t) => t.id === "track-001");
+    expect(moved?.playlistId).toBe("pl-003");
+    expect(moved?.order).toBe(1);
+
+    // 後続テストへ影響しないよう元に戻す
+    await service.moveTrack("track-001", "pl-003", "pl-002", 0, "any_user");
+  });
+
+  it("source と track の所属が一致しない場合は 404 を返す", async () => {
+    const result = await service.moveTrack(
+      "track-001",
+      "pl-003",
+      "pl-002",
+      0,
+      "any_user",
+    );
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.status).toBe(404);
+  });
+});

@@ -258,6 +258,13 @@
 - [x] CreatePlaylistModal / AddTrackModal / ImportPlaylistModal を next/dynamic で遅延ロード（初期バンドル削減）
 - [x] staleTime を 30-60s → 5min に延長（playlists / playlist-tracks / spotify-playlists / prefetch）
 - [x] .claude/skills に nextjs-optimization / react-best-practices を追加
+
+## DnD 跨ぎ移動と書き出し同期（完了）
+- [x] moveTrack API に sourcePlaylistId を追加し、source/target 所有権と source 所属一致を検証
+- [x] PlaylistDetailView で跨ぎ DnD 時に sourceContainerId を使って moveTrack するよう修正
+- [x] DnD 保存中 Promise を保持し、Spotify 書き出し時に保存完了まで await するよう修正
+- [x] backend ユニットテストに moveTrack 回帰ケースを追加
+- [x] e2e テストに「跨ぎDnD直後の書き出し待機」ケースを追加
 - [x] babel-plugin-react-compiler をインストール（React Compiler 動作に必要）
 
 ## SEO 最適化（完了）

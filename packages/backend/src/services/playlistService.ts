@@ -497,6 +497,7 @@ export async function addTrack(
 /** トラックを別プレイリストへ移動 */
 export async function moveTrack(
   trackId: string,
+  sourcePlaylistId: string,
   targetPlaylistId: string,
   order: number,
   userId: string,
@@ -506,9 +507,17 @@ export async function moveTrack(
     if (trackIndex === -1) {
       return { ok: false, error: "Track not found", status: 404 };
     }
+    const sourcePlaylist = findFlatById(sourcePlaylistId);
+    if (!sourcePlaylist) {
+      return { ok: false, error: "Source playlist not found", status: 404 };
+    }
     const targetPlaylist = findFlatById(targetPlaylistId);
     if (!targetPlaylist) {
       return { ok: false, error: "Target playlist not found", status: 404 };
+    }
+    const current = MOCK_TRACKS[trackIndex] as { playlistId: string };
+    if (current.playlistId !== sourcePlaylistId) {
+      return { ok: false, error: "Track not found in source playlist", status: 404 };
     }
     (MOCK_TRACKS[trackIndex] as { playlistId: string }).playlistId = targetPlaylistId;
     (MOCK_TRACKS[trackIndex] as { order: number }).order = order;
@@ -517,24 +526,37 @@ export async function moveTrack(
 
   if (!db) return { ok: false, error: "DB not initialized", status: 500 };
 
-  // 所有権チェック（対象プレイリストが userId のものか確認）
-  const ownerCheck = await db
+  // 所有権チェック（source/target が userId のものか確認）
+  const sourceOwnerCheck = await db
+    .select({ id: playlists.id })
+    .from(playlists)
+    .where(and(eq(playlists.id, sourcePlaylistId), eq(playlists.userId, userId)));
+  if (sourceOwnerCheck.length === 0) {
+    return { ok: false, error: "Source playlist not found", status: 404 };
+  }
+
+  const targetOwnerCheck = await db
     .select({ id: playlists.id })
     .from(playlists)
     .where(and(eq(playlists.id, targetPlaylistId), eq(playlists.userId, userId)));
 
-  if (ownerCheck.length === 0) {
+  if (targetOwnerCheck.length === 0) {
     return { ok: false, error: "Target playlist not found", status: 404 };
   }
 
   const updated = await db
     .update(playlistTracks)
     .set({ playlistId: targetPlaylistId, order })
-    .where(eq(playlistTracks.id, trackId))
+    .where(
+      and(
+        eq(playlistTracks.id, trackId),
+        eq(playlistTracks.playlistId, sourcePlaylistId),
+      ),
+    )
     .returning({ id: playlistTracks.id });
 
   if (updated.length === 0) {
-    return { ok: false, error: "Track not found", status: 404 };
+    return { ok: false, error: "Track not found in source playlist", status: 404 };
   }
 
   return { ok: true, data: { moved: true } };

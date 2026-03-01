@@ -89,4 +89,77 @@ test.describe("プレイリスト詳細", () => {
     await page.getByRole("button", { name: "キャンセル" }).click();
     await expect(page.getByText("プレイリストを削除")).not.toBeVisible({ timeout: 3000 });
   });
+
+  test("跨ぎDnD直後に書き出しても、移動保存完了後に export が実行される", async ({ page }) => {
+    let moveRequested = false;
+    let releaseMoveRequest!: () => void;
+    const moveGate = new Promise<void>((resolve) => {
+      releaseMoveRequest = resolve;
+    });
+
+    let exportRequestCount = 0;
+
+    await page.route("**/api/playlists/*/tracks/*/move", async (route) => {
+      moveRequested = true;
+      await moveGate;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, data: { moved: true } }),
+      });
+    });
+
+    await page.route("**/api/playlists/*/items/reorder", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, data: { reordered: true } }),
+      });
+    });
+
+    await page.route("**/api/spotify/export-tree/*", async (route) => {
+      exportRequestCount += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, data: {} }),
+      });
+    });
+
+    await page.goto("/playlists/pl-001");
+
+    const sourceRow = page.locator("li", { hasText: "Rainy Day" }).first();
+    const targetRow = page.locator("li", { hasText: "Midnight Blue" }).first();
+    await expect(sourceRow).toBeVisible();
+    await expect(targetRow).toBeVisible();
+
+    const sourceHandle = sourceRow.locator("span.cursor-grab").first();
+    const sourceBox = await sourceHandle.boundingBox();
+    const targetBox = await targetRow.boundingBox();
+    expect(sourceBox).not.toBeNull();
+    expect(targetBox).not.toBeNull();
+    if (!sourceBox || !targetBox) return;
+
+    await page.mouse.move(
+      sourceBox.x + sourceBox.width / 2,
+      sourceBox.y + sourceBox.height / 2,
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      targetBox.x + targetBox.width / 2,
+      targetBox.y + targetBox.height / 2,
+      { steps: 15 },
+    );
+    await page.mouse.up();
+
+    await expect.poll(() => moveRequested).toBe(true);
+
+    // move が未完了の時点で export を押しても、実リクエストは待機すること
+    await page.getByRole("button", { name: /Spotify へ書き出し/ }).first().click();
+    await page.waitForTimeout(300);
+    expect(exportRequestCount).toBe(0);
+
+    releaseMoveRequest();
+    await expect.poll(() => exportRequestCount).toBe(1);
+  });
 });

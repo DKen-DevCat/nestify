@@ -171,15 +171,23 @@ playlistRoutes.patch(
   zValidator(
     "json",
     z.object({
+      sourcePlaylistId: z.string().uuid().optional(),
       targetPlaylistId: z.string().uuid(),
       order: z.number().int().min(0).optional(),
     }),
   ),
   async (c) => {
     const userId = c.get("userId");
+    const sourcePlaylistIdFromPath = c.req.param("id");
     const trackId = c.req.param("trackId");
-    const { targetPlaylistId, order } = c.req.valid("json");
-    const result = await moveTrack(trackId, targetPlaylistId, order ?? 0, userId);
+    const { sourcePlaylistId, targetPlaylistId, order } = c.req.valid("json");
+    const result = await moveTrack(
+      trackId,
+      sourcePlaylistId ?? sourcePlaylistIdFromPath,
+      targetPlaylistId,
+      order ?? 0,
+      userId,
+    );
     if (!result.ok) {
       return c.json({ ok: false, error: result.error }, toHttpStatus(result.status));
     }

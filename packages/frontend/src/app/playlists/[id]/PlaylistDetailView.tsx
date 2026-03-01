@@ -535,7 +535,10 @@ export function PlaylistDetailView({ id }: Props) {
   const [exportedUrls, setExportedUrls] = useState<
     Record<string, { spotifyPlaylistId: string; url: string }>
   >({});
+  const [isPersistingDnd, setIsPersistingDnd] = useState(false);
   const [activeTrack, setActiveTrack] = useState<TrackWithSource | null>(null);
+  const pendingDndPersistRef = useRef<Promise<void> | null>(null);
+  const dndPersistSeqRef = useRef(0);
 
   // インライン名前変更
   const [isRenaming, setIsRenaming] = useState(false);
@@ -638,7 +641,7 @@ export function PlaylistDetailView({ id }: Props) {
   );
 
   // reorderItems mutation（playlistId を動的に指定）
-  const { mutate: reorderItemsMutate } = useMutation({
+  const { mutateAsync: reorderItemsMutateAsync } = useMutation({
     mutationFn: ({
       playlistId,
       items,
@@ -651,25 +654,6 @@ export function PlaylistDetailView({ id }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
-      queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
-    },
-  });
-
-  // moveTrack mutation
-  const { mutate: moveTrackMutate } = useMutation({
-    mutationFn: ({
-      trackId,
-      targetPlaylistId,
-      order,
-    }: {
-      trackId: string;
-      targetPlaylistId: string;
-      order: number;
-    }) => api.playlists.moveTrack(id, trackId, targetPlaylistId, order),
-    onError: () => {
-      setLocalContainerItems(null);
-    },
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
     },
   });
@@ -726,13 +710,27 @@ export function PlaylistDetailView({ id }: Props) {
         [sourceContainerId]: newItems,
       }));
 
-      reorderItemsMutate({
-        playlistId: sourceContainerId,
-        items: newItems.map((m) => ({
-          type: m.kind === "track" ? ("track" as const) : ("playlist" as const),
-          id: m.item.id,
-        })),
-      });
+      const persistSeq = ++dndPersistSeqRef.current;
+      const persistPromise = (async () => {
+        setIsPersistingDnd(true);
+        try {
+          await reorderItemsMutateAsync({
+            playlistId: sourceContainerId,
+            items: newItems.map((m) => ({
+              type: m.kind === "track" ? ("track" as const) : ("playlist" as const),
+              id: m.item.id,
+            })),
+          });
+        } catch {
+          setLocalContainerItems(null);
+        } finally {
+          if (dndPersistSeqRef.current === persistSeq) {
+            pendingDndPersistRef.current = null;
+            setIsPersistingDnd(false);
+          }
+        }
+      })();
+      pendingDndPersistRef.current = persistPromise;
     } else {
       // クロスコンテナ: トラック移動
       // displayContainerItems から最終状態を計算する
@@ -766,9 +764,16 @@ export function PlaylistDetailView({ id }: Props) {
       }));
 
       // moveTrack → reorderItems（target + source 両方）の順で実行
-      (async () => {
+      const persistSeq = ++dndPersistSeqRef.current;
+      const persistPromise = (async () => {
+        setIsPersistingDnd(true);
         try {
-          const moveRes = await api.playlists.moveTrack(id, activeId, targetContainerId, 0);
+          const moveRes = await api.playlists.moveTrack(
+            sourceContainerId,
+            activeId,
+            targetContainerId,
+            insertAt,
+          );
           if (!moveRes.ok) {
             console.error("[DnD] moveTrack failed:", moveRes.error);
             setLocalContainerItems(null);
@@ -802,8 +807,14 @@ export function PlaylistDetailView({ id }: Props) {
           queryClient.invalidateQueries({ queryKey: ["playlists"] });
         } catch {
           setLocalContainerItems(null);
+        } finally {
+          if (dndPersistSeqRef.current === persistSeq) {
+            pendingDndPersistRef.current = null;
+            setIsPersistingDnd(false);
+          }
         }
       })();
+      pendingDndPersistRef.current = persistPromise;
     }
   };
 
@@ -855,6 +866,9 @@ export function PlaylistDetailView({ id }: Props) {
 
   const { mutate: exportPlaylist, isPending: isExporting } = useMutation({
     mutationFn: async () => {
+      if (pendingDndPersistRef.current) {
+        await pendingDndPersistRef.current;
+      }
       const res = await api.spotify.exportTree(id);
       if (!res.ok) throw new Error(res.error);
       return res.data;
@@ -996,7 +1010,7 @@ export function PlaylistDetailView({ id }: Props) {
                     background: "rgba(255,255,255,0.03)",
                   }}
                 >
-                  {isExporting ? (
+                  {isExporting || isPersistingDnd ? (
                     <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Upload size={13} />
@@ -1116,7 +1130,7 @@ export function PlaylistDetailView({ id }: Props) {
             />
             <ActionButton
               icon={
-                isExporting ? (
+                isExporting || isPersistingDnd ? (
                   <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Upload size={14} />

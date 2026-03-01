@@ -105,16 +105,16 @@ export const api = {
         }),
       }),
     moveTrack: (
-      playlistId: string,
+      sourcePlaylistId: string,
       trackId: string,
       targetPlaylistId: string,
       order?: number,
     ) =>
       apiFetch<{ moved: boolean }>(
-        `/api/playlists/${playlistId}/tracks/${trackId}/move`,
+        `/api/playlists/${sourcePlaylistId}/tracks/${trackId}/move`,
         {
           method: "PATCH",
-          body: JSON.stringify({ targetPlaylistId, order }),
+          body: JSON.stringify({ sourcePlaylistId, targetPlaylistId, order }),
         },
       ),
   },
