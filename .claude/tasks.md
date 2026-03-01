@@ -537,3 +537,9 @@
 - [x] 冗長条件 `metaRes.ok || metaRes.status === 200` → `metaRes.ok` に修正
 - [x] tsc --noEmit でバックエンドエラーなし確認
 - [x] bun test で 13 テスト全通過確認
+
+## クロスコンテナ曲並び替えバグ修正
+- [x] finalTargetItems をクロージャ依存から displayContainerItems + drag パラメータから再計算に変更
+- [x] finalSourceItems を計算してソース側も reorderItems で更新
+- [x] reorderItems の返り値チェック追加
+- [x] tsc --noEmit でフロントエンドエラーなし確認

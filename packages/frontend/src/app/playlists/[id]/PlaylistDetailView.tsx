@@ -737,24 +737,60 @@ export function PlaylistDetailView({ id }: Props) {
       });
     } else {
       // クロスコンテナ: トラック移動
-      // handleDragOver が既に localContainerItems を正しい順序に更新済みなので
-      // その状態を確定させて API を呼び出す
-      const current = localContainerItems ?? displayContainerItems;
-      const finalTargetItems = current[targetContainerId] ?? [];
+      // displayContainerItems から最終状態を計算する
+      // （localContainerItems のクロージャが stale でも正しく動くよう、drag パラメータから再計算）
+      if (!activeTrack) return;
 
-      // moveTrack → reorderItems の順で実行（order の競合を防ぐため）
+      const activeItem: MixedItem = { kind: "track", item: activeTrack };
+
+      // target: activeId を除いた配列に over の位置で挿入
+      const targetWithoutActive = (displayContainerItems[targetContainerId] ?? []).filter(
+        (m) => m.item.id !== activeId,
+      );
+      const overIdx = targetWithoutActive.findIndex((m) => m.item.id === overId);
+      const insertAt = overIdx !== -1 ? overIdx : targetWithoutActive.length;
+      const finalTargetItems: MixedItem[] = [
+        ...targetWithoutActive.slice(0, insertAt),
+        activeItem,
+        ...targetWithoutActive.slice(insertAt),
+      ];
+
+      // source: activeId を除いた配列
+      const finalSourceItems: MixedItem[] = (displayContainerItems[sourceContainerId] ?? []).filter(
+        (m) => m.item.id !== activeId,
+      );
+
+      // 楽観的更新を確定した最終状態で上書き
+      setLocalContainerItems((prev) => ({
+        ...(prev ?? displayContainerItems),
+        [targetContainerId]: finalTargetItems,
+        [sourceContainerId]: finalSourceItems,
+      }));
+
+      // moveTrack → reorderItems（target + source 両方）の順で実行
       (async () => {
         try {
           const moveRes = await api.playlists.moveTrack(id, activeId, targetContainerId, 0);
           if (!moveRes.ok) { setLocalContainerItems(null); return; }
 
-          await api.playlists.reorderItems(
-            targetContainerId,
-            finalTargetItems.map((m) => ({
-              type: m.kind === "track" ? ("track" as const) : ("playlist" as const),
-              id: m.item.id,
-            })),
-          );
+          const [targetRes, sourceRes] = await Promise.all([
+            api.playlists.reorderItems(
+              targetContainerId,
+              finalTargetItems.map((m) => ({
+                type: m.kind === "track" ? ("track" as const) : ("playlist" as const),
+                id: m.item.id,
+              })),
+            ),
+            api.playlists.reorderItems(
+              sourceContainerId,
+              finalSourceItems.map((m) => ({
+                type: m.kind === "track" ? ("track" as const) : ("playlist" as const),
+                id: m.item.id,
+              })),
+            ),
+          ]);
+
+          if (!targetRes.ok || !sourceRes.ok) { setLocalContainerItems(null); return; }
 
           queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
           queryClient.invalidateQueries({ queryKey: ["playlists"] });
