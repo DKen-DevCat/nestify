@@ -572,3 +572,7 @@
 - [x] Fix 3: exportToSpotify で metaRes / replaceRes 失敗時にサイレントフォールバックをやめてエラーを返す
 - [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認
 - [x] bun test で 13 テスト全通過確認
+
+## Codex レビュー対応 — 2026-03-01 20:00:19: Issues なし
+- [x] Issues: none — コード修正不要
+- [x] Suggestion 確認: move/reorder 失敗時の UI フィードバックと空コンテナ DnD テストは今後の改善として把握
