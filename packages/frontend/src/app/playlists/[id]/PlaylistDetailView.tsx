@@ -497,8 +497,6 @@ function PlaylistLevelContent({
 
   const displayMixed = containerItems[playlistId] ?? [];
 
-  if (displayMixed.length === 0) return null;
-
   return (
     <SortableContext
       items={displayMixed.map((m) => m.item.id)}
@@ -771,7 +769,11 @@ export function PlaylistDetailView({ id }: Props) {
       (async () => {
         try {
           const moveRes = await api.playlists.moveTrack(id, activeId, targetContainerId, 0);
-          if (!moveRes.ok) { setLocalContainerItems(null); return; }
+          if (!moveRes.ok) {
+            console.error("[DnD] moveTrack failed:", moveRes.error);
+            setLocalContainerItems(null);
+            return;
+          }
 
           const [targetRes, sourceRes] = await Promise.all([
             api.playlists.reorderItems(
@@ -790,7 +792,11 @@ export function PlaylistDetailView({ id }: Props) {
             ),
           ]);
 
-          if (!targetRes.ok || !sourceRes.ok) { setLocalContainerItems(null); return; }
+          if (!targetRes.ok || !sourceRes.ok) {
+            console.error("[DnD] reorderItems failed:", { targetRes, sourceRes });
+            setLocalContainerItems(null);
+            return;
+          }
 
           queryClient.invalidateQueries({ queryKey: ["playlist-tracks"] });
           queryClient.invalidateQueries({ queryKey: ["playlists"] });

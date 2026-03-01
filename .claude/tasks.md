@@ -565,3 +565,10 @@
 - [x] Issue 2: SortableContext 空アイテム — 前セッションで return null を削除済み、min-h-[4px] で droppable 確保済み、コード修正不要
 - [x] tsc --noEmit でバックエンドエラーなし確認
 - [x] bun test で 13 テスト全通過確認
+
+## DnD クロスコンテナ移動 + Spotify Export バグ修正
+- [x] Fix 1: PlaylistLevelContent で `if (displayMixed.length === 0) return null` を削除 → 空コンテナでも setNodeRef を持つ ul を維持し、ドロップゾーンとして機能させる
+- [x] Fix 2: handleDragEnd の cross-container ブランチで API 失敗時に console.error を追加
+- [x] Fix 3: exportToSpotify で metaRes / replaceRes 失敗時にサイレントフォールバックをやめてエラーを返す
+- [x] tsc --noEmit でフロント・バックエンド両方エラーなし確認
+- [x] bun test で 13 テスト全通過確認
