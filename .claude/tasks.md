@@ -543,3 +543,15 @@
 - [x] finalSourceItems を計算してソース側も reorderItems で更新
 - [x] reorderItems の返り値チェック追加
 - [x] tsc --noEmit でフロントエンドエラーなし確認
+
+## Codex レビュー対応 — 2026-02-27 20:47:54: Issues なし
+- [x] Issues: none — コード修正不要
+- [x] Suggestion 確認: .claude ファイルのコミットはトレーサビリティのため意図的
+
+## Codex レビュー対応 — 2026-02-27 20:52:06: Issues なし
+- [x] Issues: none — コード修正不要
+- [x] Suggestion 確認: .claude/plan.md の更新・コミットは意図的（重複レビューログはスクリプト側で今後対処予定）
+
+## Codex レビュー対応 — 2026-03-01 19:13:02
+- [x] Suggestion 確認: moveTrack の order:0 は直後の reorderItems で正しい順序に上書きされる設計であり意図的
+- [x] コード修正不要（Issues なし）

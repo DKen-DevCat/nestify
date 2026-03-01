@@ -548,3 +548,29 @@ Suggestions/positives: remove that control character and confirm `.claude` files
 Unstaged changes: none; staged changes: none. Issues: none obvious in spotifyService.ts; latest commit adds timeouts and handles failed track POST/append with clear error responses. Suggestions: add tests for Spotify failure paths and confirm AbortSignal.timeout support in the target runtime; Positives: avoids silent failures and simplifies the metaRes.ok check.
 
 > ステータス: 対応完了（Issues なし / Suggestion: Spotifyテスト追加・AbortSignal.timeout確認 — Bunは Web APIs 準拠のため対応済みと確認済み）
+
+---
+
+## Codex レビュー — 2026-02-27 20:47:54
+
+Unstaged changes: none; staged changes: none; latest commit only adds review log entries to `.claude/plan.md` and `.claude/tasks.md` (13 insertions).  
+Issues: none found (no code changes).  
+Suggestions: confirm `.claude/` files are intended for version control and keep review logs centralized; Positives: timestamped entries and checklist/status updates are clear.
+
+> ステータス: 対応完了（Issues なし / .claude ファイルのコミットはトレーサビリティのため意図的）
+
+---
+
+## Codex レビュー — 2026-02-27 20:52:06
+
+Unstaged: `.claude/plan.md` adds a new Codex review log section; staged: none. Issues: none found (no code changes), suggestion: confirm `.claude/plan.md` is intended to be updated/committed and avoid duplicate review logs. Positives: latest commit only adds clear, timestamped review/task entries in `.claude/plan.md` and `.claude/tasks.md`.
+
+> ステータス: 対応完了（Issues なし / .claude ファイルのコミットはトレーサビリティのため意図的）
+
+---
+
+## Codex レビュー — 2026-03-01 19:13:02
+
+Unstaged: `.claude/plan.md` has appended review logs; staged: none. Latest commit updates `PlaylistDetailView` cross-container reorder to recompute target/source arrays from `displayContainerItems` and reorder both (plus `tasks.md`); no clear bugs, but confirm `moveTrack`’s index (still `0`) is intentionally corrected by `reorderItems` or use `insertAt` to match the drop position. Positives: avoids stale closure state, updates both containers, and rolls back optimistic updates on reorder failure.
+
+> ステータス: 対応完了（Suggestion 確認済み — moveTrack の order:0 は直後の reorderItems で正しい順序に上書きされる設計。insertAt を渡す代替案もあるが、reorderItems で一括確定する現方針を維持）
