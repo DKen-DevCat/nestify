@@ -474,53 +474,64 @@ export async function exportToSpotify(
       },
     );
 
-    // 404 や権限エラーの場合は新規作成にフォールバック
-    if (metaRes.ok) {
-      // トラックを差し替え（PUT = 全置換、100件まで）
-      const replaceRes = await fetch(
+    // メタデータ更新失敗（404・権限エラーなど）はエラーを返す
+    if (!metaRes.ok) {
+      const body = await metaRes.text().catch(() => "");
+      return {
+        ok: false,
+        error: `Failed to update Spotify playlist metadata (${metaRes.status})${body ? `: ${body.slice(0, 100)}` : ""}`,
+        status: metaRes.status,
+      };
+    }
+
+    // トラックを差し替え（PUT = 全置換、100件まで）
+    const replaceRes = await fetch(
+      `https://api.spotify.com/v1/playlists/${existingSpotifyId}/tracks`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ uris: uris.slice(0, 100) }),
+        signal: AbortSignal.timeout(10_000),
+      },
+    );
+
+    if (!replaceRes.ok) {
+      const body = await replaceRes.text().catch(() => "");
+      return {
+        ok: false,
+        error: `Failed to replace tracks in Spotify playlist (${replaceRes.status})${body ? `: ${body.slice(0, 100)}` : ""}`,
+        status: replaceRes.status,
+      };
+    }
+
+    // 101件目以降を追加（POST = append）
+    for (let i = 100; i < uris.length; i += 100) {
+      const appendRes = await fetch(
         `https://api.spotify.com/v1/playlists/${existingSpotifyId}/tracks`,
         {
-          method: "PUT",
+          method: "POST",
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ uris: uris.slice(0, 100) }),
+          body: JSON.stringify({ uris: uris.slice(i, i + 100) }),
           signal: AbortSignal.timeout(10_000),
         },
       );
-
-      if (replaceRes.ok) {
-        // 101件目以降を追加（POST = append）
-        for (let i = 100; i < uris.length; i += 100) {
-          const appendRes = await fetch(
-            `https://api.spotify.com/v1/playlists/${existingSpotifyId}/tracks`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              body: JSON.stringify({ uris: uris.slice(i, i + 100) }),
-              signal: AbortSignal.timeout(10_000),
-            },
-          );
-          if (!appendRes.ok) {
-            const body = await appendRes.text().catch(() => "");
-            return {
-              ok: false,
-              error: `Failed to append tracks to Spotify playlist (${appendRes.status})${body ? `: ${body.slice(0, 100)}` : ""}`,
-              status: 500,
-            };
-          }
-        }
-
+      if (!appendRes.ok) {
+        const body = await appendRes.text().catch(() => "");
         return {
-          ok: true,
-          data: {
-            spotifyPlaylistId: existingSpotifyId,
-            url: `https://open.spotify.com/playlist/${existingSpotifyId}`,
-          },
+          ok: false,
+          error: `Failed to append tracks to Spotify playlist (${appendRes.status})${body ? `: ${body.slice(0, 100)}` : ""}`,
+          status: appendRes.status,
         };
       }
     }
 
-    // 更新失敗 → 新規作成にフォールバック（spotifyPlaylistId をリセット）
-    existingSpotifyId = null;
+    return {
+      ok: true,
+      data: {
+        spotifyPlaylistId: existingSpotifyId,
+        url: `https://open.spotify.com/playlist/${existingSpotifyId}`,
+      },
+    };
   }
 
   // --- 新規 Spotify プレイリストを作成 ---

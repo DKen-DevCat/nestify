@@ -559,3 +559,9 @@
 ## Codex レビュー対応 — 2026-03-01 19:40:46: Issues なし
 - [x] Issues: none — コード修正不要
 - [x] Suggestion 確認: .claude ファイルのコミットはトレーサビリティのため意図的（既定方針）
+
+## Codex レビュー対応 — 2026-03-01 19:48:28
+- [x] Issue 1: exportToSpotify の Spotify API 失敗時に hardcoded status:500 → upstream status code（metaRes.status / replaceRes.status / appendRes.status）に変更
+- [x] Issue 2: SortableContext 空アイテム — 前セッションで return null を削除済み、min-h-[4px] で droppable 確保済み、コード修正不要
+- [x] tsc --noEmit でバックエンドエラーなし確認
+- [x] bun test で 13 テスト全通過確認
